@@ -59,6 +59,8 @@ export interface Env {
   ADMIN_DOMAIN: string;
   PLATFORM_DOMAIN: string;
   JWT_SECRET: string;
+  CLOUDFLARE_API_TOKEN: string;
+  CLOUDFLARE_ZONE_ID: string;
 }
 
 export interface JwtPayload {

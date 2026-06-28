@@ -3,6 +3,7 @@ import { Env, Tenant } from '../../types';
 import { query, queryOne, execute } from '../../utils/db';
 import { json, error, notFound } from '../../utils/response';
 import { invalidateTenantCache } from '../../utils/cache';
+import { createDnsRecord, deleteDnsRecord } from '../../utils/dns';
 
 function generateId(): string {
   return crypto.randomUUID();
@@ -53,6 +54,8 @@ export async function create(c: Context<{ Bindings: Env }>) {
     );
   }
 
+  await createDnsRecord(c.env, slug);
+
   const tenant = await queryOne<Tenant>(c.env, 'SELECT * FROM tenants WHERE id = ?', [id]);
   return json(tenant, 201);
 }
@@ -66,7 +69,12 @@ export async function update(c: Context<{ Bindings: Env }>) {
   if (!existing) return notFound('Tenant not found');
 
   if (name) await execute(c.env, 'UPDATE tenants SET name = ? WHERE id = ?', [name, id]);
-  if (slug) {
+  if (slug && slug !== existing.slug) {
+    await deleteDnsRecord(c.env, existing.slug);
+    await execute(c.env, 'UPDATE tenants SET slug = ? WHERE id = ?', [slug, id]);
+    await invalidateTenantCache(c.env, existing.slug);
+    await createDnsRecord(c.env, slug);
+  } else if (slug) {
     await execute(c.env, 'UPDATE tenants SET slug = ? WHERE id = ?', [slug, id]);
     await invalidateTenantCache(c.env, existing.slug);
   }
@@ -94,6 +102,8 @@ export async function remove(c: Context<{ Bindings: Env }>) {
 
   await execute(c.env, 'DELETE FROM tenants WHERE id = ?', [id]);
   await invalidateTenantCache(c.env, existing.slug);
+
+  await deleteDnsRecord(c.env, existing.slug);
 
   return json({ deleted: true });
 }
