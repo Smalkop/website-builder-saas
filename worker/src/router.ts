@@ -93,19 +93,31 @@ async function serveAsset(obj: R2Object, path: string): Promise<Response> {
   return new Response(obj.body, { headers });
 }
 
-const ADMIN_SPA = `<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Panel de Administraci&oacute;n</title>
-  <link rel="stylesheet" href="/admin/assets/index.css" />
-</head>
-<body>
-  <div id="root"></div>
-  <script type="module" src="/admin/assets/index.js"></script>
-</body>
-</html>`;
+async function serveHtml(c: any, key: string): Promise<Response> {
+  const obj = await c.env.ASSETS.get(key);
+  if (!obj) return new Response('Not found', { status: 404 });
+  const headers = new Headers();
+  obj.writeHttpMetadata(headers);
+  headers.set('Content-Type', 'text/html; charset=utf-8');
+  headers.set('Cache-Control', 'no-cache');
+  return new Response(obj.body, { headers });
+}
+
+const ADMIN_HTML_KEY = 'admin/index.html';
+
+app.get('/admin*', async (c) => {
+  const url = new URL(c.req.url);
+  if (url.pathname === '/admin/' || url.pathname === '/admin') {
+    return serveHtml(c, ADMIN_HTML_KEY);
+  }
+  if (url.pathname.startsWith('/admin/assets/')) {
+    const key = url.pathname.slice(1);
+    const obj = await c.env.ASSETS.get(key);
+    if (!obj) return new Response('Not found', { status: 404 });
+    return serveAsset(obj, key);
+  }
+  return serveHtml(c, ADMIN_HTML_KEY);
+});
 
 const CLIENT_SPA = `<!DOCTYPE html>
 <html lang="es">
@@ -120,19 +132,6 @@ const CLIENT_SPA = `<!DOCTYPE html>
   <script type="module" src="/site/assets/index.js"></script>
 </body>
 </html>`;
-
-app.get('/admin*', async (c) => {
-  const url = new URL(c.req.url);
-  if (url.pathname.startsWith('/admin/assets/')) {
-    const key = url.pathname.slice(1);
-    const obj = await c.env.ASSETS.get(key);
-    if (!obj) return new Response('Not found', { status: 404 });
-    return serveAsset(obj, key);
-  }
-  return new Response(ADMIN_SPA, {
-    headers: { 'Content-Type': 'text/html; charset=utf-8' },
-  });
-});
 
 app.get('*', async (c) => {
   const host = c.req.header('host') || '';
