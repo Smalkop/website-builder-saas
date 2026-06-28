@@ -1,0 +1,31 @@
+name = "website-builder"
+main = "worker/src/index.ts"
+compatibility_date = "2024-09-01"
+
+# Routes
+routes = [
+  { pattern = "dash.brahian.dev/*", zone_name = "brahian.dev" },
+  { pattern = "*.brahian.dev/*", zone_name = "brahian.dev" },
+]
+
+# D1 Database
+[[d1_databases]]
+binding = "DB"
+database_name = "panel-db"
+database_id = "4f02ad1b-f685-4e0f-8d06-a34cadd30fff"
+
+# KV Cache
+[[kv_namespaces]]
+binding = "CACHE"
+id = "e8ef7981bba14661a4527bfb9eeb6523"
+
+# R2 Storage
+[[r2_buckets]]
+binding = "ASSETS"
+bucket_name = "panel-assets"
+
+# Environment variables
+[vars]
+ADMIN_DOMAIN = "dash.brahian.dev"
+PLATFORM_DOMAIN = "brahian.dev"
+JWT_SECRET = "change-this-to-a-secure-random-string"

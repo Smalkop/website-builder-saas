@@ -1,0 +1,22 @@
+{
+  "name": "website-builder-saas",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:init": "wrangler d1 execute panel-db --file=schema/001_init.sql",
+    "db:local": "wrangler d1 execute panel-db --local --file=schema/001_init.sql",
+    "admin:dev": "cd admin && npm run dev",
+    "admin:build": "cd admin && npm run build",
+    "site:dev": "cd client-site && npm run dev",
+    "site:build": "cd client-site && npm run build"
+  },
+  "dependencies": {
+    "hono": "^4.6.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240901.0",
+    "wrangler": "^3.70.0",
+    "typescript": "^5.5.0"
+  }
+}
