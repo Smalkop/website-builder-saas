@@ -9,9 +9,9 @@ export default defineConfig({
     manifest: true,
     rollupOptions: {
       output: {
-        entryFileNames: 'assets/index.js',
+        entryFileNames: 'assets/index-[hash].js',
         chunkFileNames: 'assets/[name]-[hash].js',
-        assetFileNames: 'assets/[name][extname]',
+        assetFileNames: 'assets/[name]-[hash][extname]',
       },
     },
   },
