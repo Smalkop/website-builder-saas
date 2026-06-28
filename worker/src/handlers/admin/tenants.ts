@@ -31,11 +31,12 @@ export async function create(c: Context<{ Bindings: Env }>) {
 
   if (!name || !slug) return error('Name and slug are required');
 
+  const normalizedSlug = slug.toLowerCase().trim();
   const id = generateId();
   const platformDomain = c.env.PLATFORM_DOMAIN;
-  const subdomain = `${slug}.${platformDomain}`;
+  const subdomain = `${normalizedSlug}.${platformDomain}`;
 
-  await execute(c.env, 'INSERT INTO tenants (id, name, slug) VALUES (?, ?, ?)', [id, name, slug]);
+  await execute(c.env, 'INSERT INTO tenants (id, name, slug) VALUES (?, ?, ?)', [id, name, normalizedSlug]);
 
   await execute(c.env, `
     INSERT INTO tenant_settings (tenant_id, business_name, primary_color, secondary_color, whatsapp_number)
@@ -54,7 +55,7 @@ export async function create(c: Context<{ Bindings: Env }>) {
     );
   }
 
-  await createDnsRecord(c.env, slug);
+  await createDnsRecord(c.env, normalizedSlug);
 
   const tenant = await queryOne<Tenant>(c.env, 'SELECT * FROM tenants WHERE id = ?', [id]);
   return json(tenant, 201);
@@ -70,12 +71,13 @@ export async function update(c: Context<{ Bindings: Env }>) {
 
   if (name) await execute(c.env, 'UPDATE tenants SET name = ? WHERE id = ?', [name, id]);
   if (slug && slug !== existing.slug) {
+    const newSlug = slug.toLowerCase().trim();
     await deleteDnsRecord(c.env, existing.slug);
-    await execute(c.env, 'UPDATE tenants SET slug = ? WHERE id = ?', [slug, id]);
+    await execute(c.env, 'UPDATE tenants SET slug = ? WHERE id = ?', [newSlug, id]);
     await invalidateTenantCache(c.env, existing.slug);
-    await createDnsRecord(c.env, slug);
+    await createDnsRecord(c.env, newSlug);
   } else if (slug) {
-    await execute(c.env, 'UPDATE tenants SET slug = ? WHERE id = ?', [slug, id]);
+    await execute(c.env, 'UPDATE tenants SET slug = ? WHERE id = ?', [slug.toLowerCase().trim(), id]);
     await invalidateTenantCache(c.env, existing.slug);
   }
   if (status) await execute(c.env, 'UPDATE tenants SET status = ? WHERE id = ?', [status, id]);
