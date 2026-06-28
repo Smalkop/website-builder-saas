@@ -21,10 +21,12 @@ app.use('*', resolveTenant);
 
 app.get('/api/health', (c) => json({ status: 'ok', timestamp: new Date().toISOString() }));
 
+const authLogin = new Hono<Bindings>();
+authLogin.post('/auth/login', authHandler.login);
+
 const adminApi = new Hono<Bindings>();
 adminApi.use('*', adminAuth);
 
-adminApi.post('/auth/login', authHandler.login);
 adminApi.get('/auth/me', authHandler.me);
 
 adminApi.get('/tenants', tenantsHandler.list);
@@ -50,6 +52,7 @@ adminApi.delete('/tenants/:tenantId/domains/:domainId', domainsHandler.remove);
 
 adminApi.post('/tenants/:tenantId/upload', storageHandler.uploadImage);
 
+app.route('/api/admin', authLogin);
 app.route('/api/admin', adminApi);
 
 const publicApi = new Hono<Bindings>();
