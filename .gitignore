@@ -3,3 +3,9 @@ dist/
 .dev.vars
 *.log
 .DS_Store
+.wrangler/
+admin/assets/
+admin/dist/
+site/
+client-site/dist/
+wrangler.toml.bak
