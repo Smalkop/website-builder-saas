@@ -14,6 +14,24 @@ export interface SiteConfig {
   facebook_url: string;
   instagram_url: string;
   footer_credit_enabled: number;
+  variants_enabled: number;
+}
+
+export interface AttributeValue {
+  id: string;
+  attribute_id: string;
+  value: string;
+  sort_order: number;
+}
+
+export interface ProductAttribute {
+  id: string;
+  tenant_id: string;
+  name: string;
+  sort_order: number;
+  required: number;
+  active: number;
+  values: AttributeValue[];
 }
 
 export interface Product {
@@ -70,6 +88,12 @@ export async function getMenu(): Promise<MenuItem[]> {
 
 export async function getCategories(): Promise<Category[]> {
   const res = await fetch(`${API_BASE}/categories`);
+  if (!res.ok) return [];
+  return res.json();
+}
+
+export async function getAttributes(): Promise<ProductAttribute[]> {
+  const res = await fetch(`${API_BASE}/attributes`);
   if (!res.ok) return [];
   return res.json();
 }

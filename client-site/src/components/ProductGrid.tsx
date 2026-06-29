@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import ProductDetail from './ProductDetail';
-import { Product, Category } from '../api';
+import { Product, Category, ProductAttribute } from '../api';
 
 interface ProductGridProps {
   products: Product[];
   categories: Category[];
+  attributes: ProductAttribute[];
+  whatsappNumber: string;
 }
 
-export default function ProductGrid({ products, categories }: ProductGridProps) {
+export default function ProductGrid({ products, categories, attributes, whatsappNumber }: ProductGridProps) {
   const [selected, setSelected] = useState<Product | null>(null);
   const [filter, setFilter] = useState('');
 
@@ -86,7 +88,12 @@ export default function ProductGrid({ products, categories }: ProductGridProps) 
       </div>
 
       {selected && (
-        <ProductDetail product={selected} onClose={() => setSelected(null)} />
+        <ProductDetail
+          product={selected}
+          onClose={() => setSelected(null)}
+          attributes={attributes}
+          whatsappNumber={whatsappNumber}
+        />
       )}
     </div>
   );

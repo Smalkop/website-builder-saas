@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getSiteConfig, getProducts, getMenu, getCategories, SiteConfig, Product, MenuItem, Category } from './api';
+import { getSiteConfig, getProducts, getMenu, getCategories, getAttributes, SiteConfig, Product, MenuItem, Category, ProductAttribute } from './api';
 import ThemeProvider from './components/ThemeProvider';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
@@ -12,16 +12,18 @@ export default function App() {
   const [products, setProducts] = useState<Product[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [attributes, setAttributes] = useState<ProductAttribute[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    Promise.all([getSiteConfig(), getProducts(), getMenu(), getCategories()])
-      .then(([cfg, prods, menu, cats]) => {
+    Promise.all([getSiteConfig(), getProducts(), getMenu(), getCategories(), getAttributes()])
+      .then(([cfg, prods, menu, cats, attrs]) => {
         setConfig(cfg);
         setProducts(prods);
         setMenuItems(menu);
         setCategories(cats);
+        setAttributes(attrs);
       })
       .catch((err) => {
         setError(err.message);
@@ -72,7 +74,12 @@ export default function App() {
 
         {hasProducts && (
           <section id="productos">
-            <ProductGrid products={products} categories={categories} />
+            <ProductGrid
+              products={products}
+              categories={categories}
+              attributes={config.variants_enabled ? attributes : []}
+              whatsappNumber={config.whatsapp_number}
+            />
           </section>
         )}
 

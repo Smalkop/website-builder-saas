@@ -31,6 +31,7 @@ export interface TenantSettings {
   facebook_url: string;
   instagram_url: string;
   footer_credit_enabled: number;
+  variants_enabled: number;
 }
 
 export interface Product {
@@ -81,6 +82,25 @@ export interface AdminUser {
   password_hash: string;
   name: string;
   role: 'admin' | 'superadmin';
+  created_at: string;
+}
+
+export interface ProductAttribute {
+  id: string;
+  tenant_id: string;
+  name: string;
+  sort_order: number;
+  required: number;
+  active: number;
+  created_at: string;
+  values: AttributeValue[];
+}
+
+export interface AttributeValue {
+  id: string;
+  attribute_id: string;
+  value: string;
+  sort_order: number;
   created_at: string;
 }
 

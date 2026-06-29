@@ -15,6 +15,7 @@ import * as storageHandler from './handlers/admin/storage';
 import * as categoriesHandler from './handlers/admin/categories';
 import * as menusHandler from './handlers/admin/menus';
 import * as clientUsersHandler from './handlers/admin/client-users';
+import * as attributesHandler from './handlers/admin/attributes';
 import * as siteHandler from './handlers/public/site';
 import * as clientAuthHandler from './handlers/client/auth';
 import * as clientProductsHandler from './handlers/client/products';
@@ -80,6 +81,16 @@ adminApi.delete('/tenants/:tenantId/menus/:itemId', menusHandler.remove);
 adminApi.get('/tenants/:tenantId/client-user', clientUsersHandler.get);
 adminApi.put('/tenants/:tenantId/client-user', clientUsersHandler.createOrUpdate);
 
+adminApi.get('/tenants/:tenantId/attributes', attributesHandler.list);
+adminApi.post('/tenants/:tenantId/attributes', attributesHandler.create);
+adminApi.put('/tenants/:tenantId/attributes/:attributeId', attributesHandler.update);
+adminApi.delete('/tenants/:tenantId/attributes/:attributeId', attributesHandler.remove);
+adminApi.put('/tenants/:tenantId/attributes/reorder', attributesHandler.reorder);
+adminApi.post('/tenants/:tenantId/attributes/:attributeId/values', attributesHandler.createValue);
+adminApi.put('/tenants/:tenantId/attributes/:attributeId/values/:valueId', attributesHandler.updateValue);
+adminApi.delete('/tenants/:tenantId/attributes/:attributeId/values/:valueId', attributesHandler.removeValue);
+adminApi.put('/tenants/:tenantId/attributes/:attributeId/values/reorder', attributesHandler.reorderValues);
+
 app.route('/api/admin', authLogin);
 app.route('/api/admin', adminApi);
 
@@ -106,6 +117,9 @@ clientApi.delete('/menus/:itemId', clientMenusHandler.remove);
 clientApi.get('/settings', clientSettingsHandler.get);
 clientApi.put('/settings', clientSettingsHandler.update);
 clientApi.post('/settings/upload', clientSettingsHandler.uploadImage);
+
+clientApi.get('/attributes', attributesHandler.list);
+clientApi.post('/attributes/:attributeId/values', attributesHandler.createValue);
 
 app.route('/api/client', clientLogin);
 app.route('/api/client', clientApi);

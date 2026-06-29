@@ -199,3 +199,61 @@ export async function createOrUpdateClientUser(tenantId: string, data: any) {
     body: JSON.stringify(data),
   });
 }
+
+export async function getAttributes(tenantId: string) {
+  return request<any[]>(`/tenants/${tenantId}/attributes`);
+}
+
+export async function createAttribute(tenantId: string, data: any) {
+  return request<any>(`/tenants/${tenantId}/attributes`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateAttribute(tenantId: string, attributeId: string, data: any) {
+  return request<any>(`/tenants/${tenantId}/attributes/${attributeId}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteAttribute(tenantId: string, attributeId: string) {
+  return request<any>(`/tenants/${tenantId}/attributes/${attributeId}`, {
+    method: 'DELETE',
+  });
+}
+
+export async function reorderAttributes(tenantId: string, order: string[]) {
+  return request<any>(`/tenants/${tenantId}/attributes/reorder`, {
+    method: 'PUT',
+    body: JSON.stringify({ order }),
+  });
+}
+
+export async function createAttributeValue(tenantId: string, attributeId: string, value: string) {
+  return request<any>(`/tenants/${tenantId}/attributes/${attributeId}/values`, {
+    method: 'POST',
+    body: JSON.stringify({ value }),
+  });
+}
+
+export async function updateAttributeValue(tenantId: string, attributeId: string, valueId: string, value: string) {
+  return request<any>(`/tenants/${tenantId}/attributes/${attributeId}/values/${valueId}`, {
+    method: 'PUT',
+    body: JSON.stringify({ value }),
+  });
+}
+
+export async function deleteAttributeValue(tenantId: string, attributeId: string, valueId: string) {
+  return request<any>(`/tenants/${tenantId}/attributes/${attributeId}/values/${valueId}`, {
+    method: 'DELETE',
+  });
+}
+
+export async function reorderAttributeValues(tenantId: string, attributeId: string, order: string[]) {
+  return request<any>(`/tenants/${tenantId}/attributes/${attributeId}/values/reorder`, {
+    method: 'PUT',
+    body: JSON.stringify({ order }),
+  });
+}

@@ -13,15 +13,17 @@ Build and deploy a multi-tenant Website Builder SaaS on Cloudflare Workers, with
 
 ## Progress
 ### Done
-- Full project scaffold: `wrangler.toml`, `package.json`, `tsconfig.json`, schema migrations (001–004), seed
-- Worker backend: Hono router, tenant resolver middleware, admin JWT auth, client JWT auth (tenantId from role claim), admin CRUD (tenants, products, domains, settings, storage, categories, menus, client-users), client API (auth, products, categories, settings, menus), public site API (config, products, menu tree, categories)
-- Admin SPA (React): full panel — Login, Dashboard, TenantCreate (with logo upload, 1:1 crop via canvas), TenantEdit (4 tabs: Info/Branding/Cliente/Límites), Products (image upload, offers, category dropdown), Domains (auto DNS), Categories (CRUD), Menus (CRUD with parent_id nesting); API client extended with all endpoints
-- Client Admin SPA (`client-admin/`): Vite + React — Login, Layout with sidebar navigation (Products, Categories, Menus, Settings), product CRUD with image upload (1:1 crop), category CRUD, menu CRUD with anchor/parent, settings management (colors, WhatsApp, logo upload, footer credit toggle)
-- Client SPA (`client-site/`): Vite + React — Navbar with Inicio/Nosotros/Productos/Contacto defaults + custom menu items, Hero, ProductGrid (offers display, filter by category_id), ProductDetail (offers display), WhatsAppButton, About section (nosotros), Footer (footer credit toggle), anchor sections with scroll-margin-top
-- Schema migration `004_normalize.sql`: added `category_id` TEXT FK to products, migrated existing data (33 rows read, 2 rows written)
-- DB normalization: products.category (TEXT name) → products.category_id (FK to categories.id); all handlers use JOIN to return `category_name`; category delete nullifies `category_id` on referencing products
+- Full project scaffold: `wrangler.toml`, `package.json`, `tsconfig.json`, schema migrations (001–005), seed
+- Worker backend: Hono router, tenant resolver middleware, admin JWT auth, client JWT auth (tenantId from role claim), admin CRUD (tenants, products, domains, settings, storage, categories, menus, client-users, attributes), client API (auth, products, categories, settings, menus, attributes read + value create), public site API (config, products, menu tree, categories, attributes)
+- Admin SPA (React): full panel — Login, Dashboard, TenantCreate, TenantEdit (5 tabs: Info/Branding/Variantes/Cliente/Límites), Products, Domains, Categories, Menus; API client extended with all endpoints
+- Client Admin SPA (`client-admin/`): Vite + React — Login, Layout with sidebar navigation (Products, Categories, Variantes, Menus, Settings), product CRUD with image upload, category CRUD, menu CRUD, variant value management (add values to existing attributes), settings management
+- Client SPA (`client-site/`): Vite + React — Navbar, Hero, ProductGrid, ProductDetail with variant selectors (Color, Talle, Material, etc.) and WhatsApp consult button that builds message from selected variants, AboutSection, Footer, WhatsAppButton
+- Schema migration `005_variants.sql`: added `product_attributes` and `attribute_values` tables + `variants_enabled` column to tenant_settings
+- Variant system: admin CRUD for attributes + values per tenant, reorder via up/down buttons, required/optional toggle, active/inactive toggle
+- WhatsApp button in ProductDetail builds message with selected variant values; if required attribute not selected, shows error and prevents opening WhatsApp
+- Responsive admin: sidebar collapses on mobile, tabs scrollable, form rows stack vertically
 - All 3 SPAs built, uploaded to R2 (`panel-assets` bucket) with correct Content-Type
-- Worker deployed (current version: d7fbe5af) — routes: `dash.brahian.dev/*`, `*.brahian.dev/*`
+- Worker deployed (current version: 936e9687) — routes: `dash.brahian.dev/*`, `*.brahian.dev/*`
 - DNS records auto-created/deleted on tenant create/update/delete with slug normalization (lowercase)
 - Git pushed to origin/main (latest: 57ff7cd)
 
@@ -69,19 +71,21 @@ Build and deploy a multi-tenant Website Builder SaaS on Cloudflare Workers, with
 - `worker/src/handlers/admin/categories.ts`: CRUD + nullifies products.category_id on delete
 - `worker/src/handlers/admin/menus.ts`: CRUD with parent_id nesting
 - `worker/src/handlers/admin/client-users.ts`: get/createOrUpdate client user with random password generation
-- `worker/src/handlers/admin/settings.ts`: update tenant settings including footer_credit_enabled
+- `worker/src/handlers/admin/settings.ts`: update tenant settings including footer_credit_enabled, variants_enabled
+- `worker/src/handlers/admin/attributes.ts`: admin CRUD for product attributes + values per tenant; reorder, required/optional, active/inactive toggles; also used by client API (read-only list + value create)
 - `worker/src/handlers/client/auth.ts`: client login (email+password, JWT with tenantId in role)
 - `worker/src/handlers/client/products.ts`: client CRUD products with uploadImage
 - `worker/src/handlers/client/categories.ts`: client CRUD categories
 - `worker/src/handlers/client/menus.ts`: client CRUD menu items with parent_id nesting
 - `worker/src/handlers/client/settings.ts`: client get/update settings + uploadImage for logo
-- `worker/src/handlers/public/site.ts`: public API (config with footer_credit_enabled, products with category_name JOIN, menu tree, categories)
+- `worker/src/handlers/public/site.ts`: public API (config with footer_credit_enabled, products with category_name JOIN, menu tree, categories, attributes)
 - `worker/src/utils/dns.ts`: Cloudflare API helpers for A record create/delete
 - `worker/src/types/index.ts`: all interfaces (Tenant, Product with category_id/category_name, Category, MenuItem, ClientUser, etc.)
 - `schema/001_init.sql`: initial schema (tenants, domains, tenant_settings, products, admin_users)
 - `schema/002_seed_admin.sql`: admin seed with base64url hash
 - `schema/003_features.sql`: migration with client_users, categories, menu_items tables and alters
 - `schema/004_normalize.sql`: migration adding products.category_id FK + data migration
+- `schema/005_variants.sql`: migration adding product_attributes + attribute_values tables + variants_enabled column
 - `wrangler.toml`: Worker config, binds, routes, env vars incl. CLOUDFLARE_ZONE_ID
 - `admin/src/`: admin SPA — all pages (Dashboard, TenantCreate, TenantEdit, Products, Domains, Categories, Menus); App.tsx routes; api/client.ts
 - `client-admin/src/`: client-admin SPA — Components (Layout with sidebar), pages (Products, Categories, Menus, Settings, Login); App.tsx with page-state routing

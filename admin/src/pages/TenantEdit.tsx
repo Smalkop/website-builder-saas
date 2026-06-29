@@ -1,12 +1,12 @@
 import { useState, useEffect, FormEvent, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getTenant, updateTenant, getSettings, updateSettings, uploadImage, getClientUser, createOrUpdateClientUser } from '../api/client';
+import { getTenant, updateTenant, getSettings, updateSettings, uploadImage, getClientUser, createOrUpdateClientUser, getAttributes, createAttribute, updateAttribute, deleteAttribute, reorderAttributes, createAttributeValue, updateAttributeValue, deleteAttributeValue, reorderAttributeValues } from '../api/client';
 import { showToast } from '../toast';
 
 export default function TenantEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<'info' | 'branding' | 'client' | 'limits'>('info');
+  const [tab, setTab] = useState<'info' | 'branding' | 'variants' | 'client' | 'limits'>('info');
   const [tenant, setTenant] = useState<any>(null);
   const [settings, setSettings] = useState<any>(null);
   const [clientUser, setClientUser] = useState<any>(null);
@@ -14,6 +14,17 @@ export default function TenantEdit() {
   const [clientLoading, setClientLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  const [attributes, setAttributes] = useState<any[]>([]);
+  const [attrsLoading, setAttrsLoading] = useState(false);
+  const [editingAttr, setEditingAttr] = useState<any>(null);
+  const [attrForm, setAttrForm] = useState({ name: '', required: false, active: true });
+  const [showAttrModal, setShowAttrModal] = useState(false);
+  const [editingValue, setEditingValue] = useState<{ attrId: string; value: any } | null>(null);
+  const [valueInput, setValueInput] = useState('');
+  const [showValueModal, setShowValueModal] = useState(false);
+  const [addingValueForAttr, setAddingValueForAttr] = useState<string | null>(null);
+
   const logoInputRef = useRef<HTMLInputElement>(null);
 
   async function load() {
@@ -30,7 +41,23 @@ export default function TenantEdit() {
     }
   }
 
+  async function loadAttributes() {
+    setAttrsLoading(true);
+    try {
+      const data = await getAttributes(id!);
+      setAttributes(data);
+    } catch (err: any) {
+      showToast(err.message, 'error');
+    } finally {
+      setAttrsLoading(false);
+    }
+  }
+
   useEffect(() => { load(); }, [id]);
+
+  useEffect(() => {
+    if (tab === 'variants') loadAttributes();
+  }, [tab]);
 
   async function handleLogoUpload(file: File) {
     const canvas = document.createElement('canvas');
@@ -85,6 +112,7 @@ export default function TenantEdit() {
         animations_enabled: settings.animations_enabled ? 1 : 0,
         layout_type: settings.layout_type,
         footer_credit_enabled: settings.footer_credit_enabled ? 1 : 0,
+        variants_enabled: settings.variants_enabled ? 1 : 0,
       });
       showToast('✓ Marca y colores actualizados con éxito', 'success');
     } catch (err: any) {
@@ -123,6 +151,109 @@ export default function TenantEdit() {
     }
   }
 
+  function openAttrCreate() {
+    setEditingAttr(null);
+    setAttrForm({ name: '', required: false, active: true });
+    setShowAttrModal(true);
+  }
+
+  function openAttrEdit(attr: any) {
+    setEditingAttr(attr);
+    setAttrForm({ name: attr.name, required: !!attr.required, active: !!attr.active });
+    setShowAttrModal(true);
+  }
+
+  async function handleAttrSave() {
+    if (!attrForm.name) return showToast('El nombre del atributo es obligatorio', 'error');
+    try {
+      if (editingAttr) {
+        await updateAttribute(id!, editingAttr.id, attrForm);
+        showToast('✓ Atributo actualizado', 'success');
+      } else {
+        await createAttribute(id!, attrForm);
+        showToast('✓ Atributo creado', 'success');
+      }
+      setShowAttrModal(false);
+      loadAttributes();
+    } catch (err: any) {
+      showToast(err.message, 'error');
+    }
+  }
+
+  async function handleAttrDelete(attrId: string) {
+    if (!confirm('¿Eliminar este atributo y todos sus valores?')) return;
+    try {
+      await deleteAttribute(id!, attrId);
+      showToast('✓ Atributo eliminado', 'success');
+      loadAttributes();
+    } catch (err: any) {
+      showToast(err.message, 'error');
+    }
+  }
+
+  function openValueCreate(attrId: string) {
+    setAddingValueForAttr(attrId);
+    setEditingValue(null);
+    setValueInput('');
+    setShowValueModal(true);
+  }
+
+  function openValueEdit(attrId: string, val: any) {
+    setAddingValueForAttr(attrId);
+    setEditingValue({ attrId, value: val });
+    setValueInput(val.value);
+    setShowValueModal(true);
+  }
+
+  async function handleValueSave() {
+    if (!valueInput || !addingValueForAttr) return showToast('El valor es obligatorio', 'error');
+    try {
+      if (editingValue) {
+        await updateAttributeValue(id!, addingValueForAttr, editingValue.value.id, valueInput);
+        showToast('✓ Valor actualizado', 'success');
+      } else {
+        await createAttributeValue(id!, addingValueForAttr, valueInput);
+        showToast('✓ Valor agregado', 'success');
+      }
+      setShowValueModal(false);
+      setAddingValueForAttr(null);
+      loadAttributes();
+    } catch (err: any) {
+      showToast(err.message, 'error');
+    }
+  }
+
+  async function handleValueDelete(attrId: string, valueId: string) {
+    if (!confirm('¿Eliminar este valor?')) return;
+    try {
+      await deleteAttributeValue(id!, attrId, valueId);
+      showToast('✓ Valor eliminado', 'success');
+      loadAttributes();
+    } catch (err: any) {
+      showToast(err.message, 'error');
+    }
+  }
+
+  function moveAttr(index: number, direction: -1 | 1) {
+    const newAttrs = [...attributes];
+    const target = index + direction;
+    if (target < 0 || target >= newAttrs.length) return;
+    [newAttrs[index], newAttrs[target]] = [newAttrs[target], newAttrs[index]];
+    setAttributes(newAttrs);
+    reorderAttributes(id!, newAttrs.map(a => a.id)).catch(() => loadAttributes());
+  }
+
+  function moveValue(attrIndex: number, valueIndex: number, direction: -1 | 1) {
+    const newAttrs = [...attributes];
+    const vals = [...newAttrs[attrIndex].values];
+    const target = valueIndex + direction;
+    if (target < 0 || target >= vals.length) return;
+    [vals[valueIndex], vals[target]] = [vals[target], vals[valueIndex]];
+    newAttrs[attrIndex] = { ...newAttrs[attrIndex], values: vals };
+    setAttributes(newAttrs);
+    reorderAttributeValues(id!, newAttrs[attrIndex].id, vals.map((v: any) => v.id)).catch(() => loadAttributes());
+  }
+
   if (loading) return <div className="loading">Cargando...</div>;
   if (!tenant) return <div className="error">Cliente no encontrado</div>;
 
@@ -136,6 +267,7 @@ export default function TenantEdit() {
       <div className="tabs">
         <button className={`tab ${tab === 'info' ? 'active' : ''}`} onClick={() => setTab('info')}>Información</button>
         <button className={`tab ${tab === 'branding' ? 'active' : ''}`} onClick={() => setTab('branding')}>Branding</button>
+        <button className={`tab ${tab === 'variants' ? 'active' : ''}`} onClick={() => setTab('variants')}>Variantes</button>
         <button className={`tab ${tab === 'client' ? 'active' : ''}`} onClick={() => setTab('client')}>Cliente</button>
         <button className={`tab ${tab === 'limits' ? 'active' : ''}`} onClick={() => setTab('limits')}>Límites</button>
       </div>
@@ -229,6 +361,12 @@ export default function TenantEdit() {
           </div>
           <div className="form-group">
             <label>
+              <input type="checkbox" checked={!!settings.variants_enabled} onChange={(e) => setSettings({ ...settings, variants_enabled: e.target.checked ? 1 : 0 })} />
+              &nbsp;Variantes habilitadas (mostrar selectores en la página pública)
+            </label>
+          </div>
+          <div className="form-group">
+            <label>
               <input type="checkbox" checked={!!settings.footer_credit_enabled} onChange={(e) => setSettings({ ...settings, footer_credit_enabled: e.target.checked ? 1 : 0 })} />
               &nbsp;Mostrar "desarrollado por Brahian Gonzalez" en el pie
             </label>
@@ -247,6 +385,72 @@ export default function TenantEdit() {
             </button>
           </div>
         </form>
+      )}
+
+      {tab === 'variants' && (
+        <div>
+          <div className="page-header" style={{ marginBottom: '1rem' }}>
+            <h3 style={{ fontSize: '1.1rem' }}>Atributos y variantes de productos</h3>
+            <button className="btn btn-primary" onClick={openAttrCreate}>+ Nuevo atributo</button>
+          </div>
+
+          {!settings?.variants_enabled && (
+            <div style={{ background: '#FEF3C7', color: '#92400E', padding: '0.75rem 1rem', borderRadius: 'var(--radius)', marginBottom: '1rem', fontSize: '0.875rem' }}>
+              Las variantes están deshabilitadas. Activá "Variantes habilitadas" en la pestaña Branding para que los selectores aparezcan en la página pública.
+            </div>
+          )}
+
+          {attrsLoading ? (
+            <div className="loading">Cargando...</div>
+          ) : attributes.length === 0 ? (
+            <div className="empty-state">
+              <p>No hay atributos definidos. Creá el primer atributo como "Color", "Talle", "Material", etc.</p>
+              <button className="btn btn-primary" onClick={openAttrCreate}>Crear atributo</button>
+            </div>
+          ) : (
+            <div className="variants-list">
+              {attributes.map((attr, ai) => (
+                <div key={attr.id} className="variant-card">
+                  <div className="variant-card-header">
+                    <div className="variant-card-title">
+                      <div className="variant-reorder">
+                        <button className="btn-icon" onClick={() => moveAttr(ai, -1)} disabled={ai === 0} title="Mover arriba">↑</button>
+                        <button className="btn-icon" onClick={() => moveAttr(ai, 1)} disabled={ai === attributes.length - 1} title="Mover abajo">↓</button>
+                      </div>
+                      <strong>{attr.name}</strong>
+                      {attr.required ? <span className="badge badge-warning" style={{ marginLeft: '0.5rem' }}>Obligatorio</span> : <span className="badge badge-secondary" style={{ marginLeft: '0.5rem' }}>Opcional</span>}
+                      {!attr.active && <span className="badge badge-danger" style={{ marginLeft: '0.5rem' }}>Inactivo</span>}
+                    </div>
+                    <div className="variant-card-actions">
+                      <button className="btn btn-sm" onClick={() => openAttrEdit(attr)}>Editar</button>
+                      <button className="btn btn-sm btn-danger" onClick={() => handleAttrDelete(attr.id)}>Eliminar</button>
+                    </div>
+                  </div>
+                  <div className="variant-values">
+                    {attr.values && attr.values.length > 0 ? (
+                      <div className="values-grid">
+                        {attr.values.map((val: any, vi: number) => (
+                          <div key={val.id} className="value-chip">
+                            <div className="value-reorder">
+                              <button className="btn-icon-sm" onClick={() => moveValue(ai, vi, -1)} disabled={vi === 0}>↑</button>
+                              <button className="btn-icon-sm" onClick={() => moveValue(ai, vi, 1)} disabled={vi === attr.values.length - 1}>↓</button>
+                            </div>
+                            <span>{val.value}</span>
+                            <button className="btn-icon-sm" onClick={() => openValueEdit(attr.id, val)} title="Editar">✎</button>
+                            <button className="btn-icon-sm btn-icon-danger" onClick={() => handleValueDelete(attr.id, val.id)} title="Eliminar">×</button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="values-empty">Sin valores aún</p>
+                    )}
+                    <button className="btn btn-sm" style={{ marginTop: '0.5rem' }} onClick={() => openValueCreate(attr.id)}>+ Agregar valor</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
       {tab === 'client' && (
@@ -286,6 +490,58 @@ export default function TenantEdit() {
             </button>
           </div>
         </form>
+      )}
+
+      {showAttrModal && (
+        <div className="modal-overlay" onClick={() => setShowAttrModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h3>{editingAttr ? 'Editar atributo' : 'Nuevo atributo'}</h3>
+            <div className="form" style={{ maxWidth: '100%', boxShadow: 'none', padding: 0 }}>
+              <div className="form-group">
+                <label>Nombre del atributo</label>
+                <input value={attrForm.name} onChange={(e) => setAttrForm({ ...attrForm, name: e.target.value })} placeholder="Ej: Color, Talle, Material" required />
+              </div>
+              <div className="form-group">
+                <label>
+                  <input type="checkbox" checked={attrForm.required} onChange={(e) => setAttrForm({ ...attrForm, required: e.target.checked })} />
+                  &nbsp;Obligatorio (el cliente deberá seleccionar un valor)
+                </label>
+              </div>
+              <div className="form-group">
+                <label>
+                  <input type="checkbox" checked={attrForm.active} onChange={(e) => setAttrForm({ ...attrForm, active: e.target.checked })} />
+                  &nbsp;Activo
+                </label>
+              </div>
+              <div className="form-actions">
+                <button className="btn" onClick={() => setShowAttrModal(false)}>Cancelar</button>
+                <button className="btn btn-primary" onClick={handleAttrSave}>
+                  {editingAttr ? 'Guardar cambios' : 'Crear atributo'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showValueModal && (
+        <div className="modal-overlay" onClick={() => setShowValueModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h3>{editingValue ? 'Editar valor' : 'Agregar valor'}</h3>
+            <div className="form" style={{ maxWidth: '100%', boxShadow: 'none', padding: 0 }}>
+              <div className="form-group">
+                <label>Valor</label>
+                <input value={valueInput} onChange={(e) => setValueInput(e.target.value)} placeholder="Ej: Rojo, S, Algodón" required />
+              </div>
+              <div className="form-actions">
+                <button className="btn" onClick={() => setShowValueModal(false)}>Cancelar</button>
+                <button className="btn btn-primary" onClick={handleValueSave}>
+                  {editingValue ? 'Guardar cambios' : 'Agregar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

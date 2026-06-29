@@ -3,12 +3,13 @@ import Products from '../pages/Products';
 import Categories from '../pages/Categories';
 import Settings from '../pages/Settings';
 import Menus from '../pages/Menus';
+import Variants from '../pages/Variants';
 
 interface Props {
   onLogout: () => void;
 }
 
-type Page = 'products' | 'categories' | 'settings' | 'menus';
+type Page = 'products' | 'categories' | 'settings' | 'menus' | 'variants';
 
 export default function Layout({ onLogout }: Props) {
   const [page, setPage] = useState<Page>('products');
@@ -19,6 +20,7 @@ export default function Layout({ onLogout }: Props) {
       case 'categories': return <Categories />;
       case 'settings': return <Settings />;
       case 'menus': return <Menus />;
+      case 'variants': return <Variants />;
     }
   }
 
@@ -32,6 +34,7 @@ export default function Layout({ onLogout }: Props) {
           <button className={`sidebar-link ${page === 'products' ? 'active' : ''}`} onClick={() => setPage('products')}>Productos</button>
           <button className={`sidebar-link ${page === 'categories' ? 'active' : ''}`} onClick={() => setPage('categories')}>Categorías</button>
           <button className={`sidebar-link ${page === 'menus' ? 'active' : ''}`} onClick={() => setPage('menus')}>Menú</button>
+          <button className={`sidebar-link ${page === 'variants' ? 'active' : ''}`} onClick={() => setPage('variants')}>Variantes</button>
           <button className={`sidebar-link ${page === 'settings' ? 'active' : ''}`} onClick={() => setPage('settings')}>Configuración</button>
         </nav>
         <div className="sidebar-footer">

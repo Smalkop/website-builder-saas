@@ -1,5 +1,5 @@
 import { Context } from 'hono';
-import { Env, Variables, TenantSettings, Product } from '../../types';
+import { Env, Variables, TenantSettings, Product, ProductAttribute, AttributeValue } from '../../types';
 import { queryOne, query } from '../../utils/db';
 import { json, notFound } from '../../utils/response';
 
@@ -30,6 +30,7 @@ export async function getConfig(c: Ctx) {
     facebook_url: settings.facebook_url,
     instagram_url: settings.instagram_url,
     footer_credit_enabled: settings.footer_credit_enabled,
+    variants_enabled: settings.variants_enabled,
   });
 }
 
@@ -98,4 +99,27 @@ export async function getCategories(c: Ctx) {
     [tenantId]
   );
   return json(categories);
+}
+
+export async function getAttributes(c: Ctx) {
+  const tenantId = c.get('tenantId');
+  if (!tenantId) return notFound('Tenant not resolved');
+  const attrs = await query<ProductAttribute>(
+    c.env,
+    'SELECT * FROM product_attributes WHERE tenant_id = ? AND active = 1 ORDER BY sort_order ASC, created_at ASC',
+    [tenantId]
+  );
+  const attrIds = attrs.map(a => a.id);
+  if (attrIds.length === 0) return json([]);
+  const placeholders = attrIds.map(() => '?').join(',');
+  const values = await query<AttributeValue>(
+    c.env,
+    `SELECT * FROM attribute_values WHERE attribute_id IN (${placeholders}) ORDER BY sort_order ASC, created_at ASC`,
+    attrIds
+  );
+  const grouped = attrs.map(attr => ({
+    ...attr,
+    values: values.filter(v => v.attribute_id === attr.id),
+  }));
+  return json(grouped);
 }
