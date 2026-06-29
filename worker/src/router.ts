@@ -177,8 +177,10 @@ const CLIENT_SITE_HTML_KEY = 'site/index.html';
 
 app.get('/admin*', async (c) => {
   const url = new URL(c.req.url);
+  const tenantId = c.get('tenantId');
+  const htmlKey = tenantId ? CLIENT_ADMIN_HTML_KEY : ADMIN_HTML_KEY;
   if (url.pathname === '/admin/' || url.pathname === '/admin') {
-    return serveHtml(c, ADMIN_HTML_KEY);
+    return serveHtml(c, htmlKey);
   }
   if (url.pathname.startsWith('/admin/assets/')) {
     const key = url.pathname.slice(1);
@@ -186,7 +188,7 @@ app.get('/admin*', async (c) => {
     if (!obj) return new Response('Not found', { status: 404 });
     return serveAsset(obj, key);
   }
-  return serveHtml(c, ADMIN_HTML_KEY);
+  return serveHtml(c, htmlKey);
 });
 
 app.get('*', async (c) => {
@@ -207,9 +209,6 @@ app.get('*', async (c) => {
     }
     if (url.pathname === '/' || url.pathname.startsWith('/site/')) {
       return serveHtml(c, CLIENT_SITE_HTML_KEY);
-    }
-    if (url.pathname.startsWith('/admin/')) {
-      return serveHtml(c, CLIENT_ADMIN_HTML_KEY);
     }
     return serveHtml(c, CLIENT_SITE_HTML_KEY);
   }
