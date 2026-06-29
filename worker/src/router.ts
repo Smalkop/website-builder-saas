@@ -18,6 +18,9 @@ import * as clientUsersHandler from './handlers/admin/client-users';
 import * as siteHandler from './handlers/public/site';
 import * as clientAuthHandler from './handlers/client/auth';
 import * as clientProductsHandler from './handlers/client/products';
+import * as clientCategoriesHandler from './handlers/client/categories';
+import * as clientMenusHandler from './handlers/client/menus';
+import * as clientSettingsHandler from './handlers/client/settings';
 
 type Bindings = { Bindings: Env; Variables: Variables };
 const app = new Hono<Bindings>();
@@ -89,6 +92,20 @@ clientApi.post('/products', clientProductsHandler.create);
 clientApi.put('/products/:productId', clientProductsHandler.update);
 clientApi.delete('/products/:productId', clientProductsHandler.remove);
 clientApi.post('/upload', clientProductsHandler.uploadImage);
+
+clientApi.get('/categories', clientCategoriesHandler.list);
+clientApi.post('/categories', clientCategoriesHandler.create);
+clientApi.put('/categories/:categoryId', clientCategoriesHandler.update);
+clientApi.delete('/categories/:categoryId', clientCategoriesHandler.remove);
+
+clientApi.get('/menus', clientMenusHandler.list);
+clientApi.post('/menus', clientMenusHandler.create);
+clientApi.put('/menus/:itemId', clientMenusHandler.update);
+clientApi.delete('/menus/:itemId', clientMenusHandler.remove);
+
+clientApi.get('/settings', clientSettingsHandler.get);
+clientApi.put('/settings', clientSettingsHandler.update);
+clientApi.post('/settings/upload', clientSettingsHandler.uploadImage);
 
 app.route('/api/client', clientLogin);
 app.route('/api/client', clientApi);

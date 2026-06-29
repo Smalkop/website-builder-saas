@@ -9,7 +9,9 @@ export default function Navbar({ businessName, menuItems, hasProducts, hasContac
   const items = menuItems.length > 0
     ? menuItems
     : [
+        { label: 'Inicio', anchor: 'inicio' },
         ...(hasProducts ? [{ label: 'Productos', anchor: 'productos' }] : []),
+        { label: 'Nosotros', anchor: 'nosotros' },
         ...(hasContact ? [{ label: 'Contacto', anchor: 'contacto' }] : []),
       ];
 

@@ -76,6 +76,13 @@ export default function App() {
           </section>
         )}
 
+        <section id="nosotros" className="about-section">
+          <div className="about-content">
+            <h2 className="section-title">Sobre Nosotros</h2>
+            <p>{config.business_description || 'Bienvenido a nuestra tienda. Descubrí nuestros productos y servicios.'}</p>
+          </div>
+        </section>
+
         <section id="contacto">
           <Footer
             businessName={config.business_name}

@@ -434,6 +434,25 @@ body {
   line-height: 1.7;
 }
 
+/* ABOUT SECTION */
+.about-section {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 4rem 1.5rem;
+  text-align: center;
+}
+
+.about-content {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.about-content p {
+  font-size: 1.05rem;
+  color: var(--text-muted);
+  line-height: 1.8;
+}
+
 /* WHATSAPP FLOAT */
 .whatsapp-float {
   position: fixed;

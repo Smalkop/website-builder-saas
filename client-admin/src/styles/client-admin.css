@@ -28,7 +28,8 @@ a { color: var(--color-primary); text-decoration: none; }
 .sidebar { width: 220px; background: var(--color-gray-900); color: white; display: flex; flex-direction: column; padding: 1.5rem 1rem; position: fixed; top: 0; left: 0; bottom: 0; }
 .sidebar-header h2 { font-size: 1rem; font-weight: 600; margin-bottom: 2rem; color: white; }
 .sidebar-nav { flex: 1; }
-.sidebar-link { display: block; padding: 0.625rem 0.75rem; border-radius: var(--radius); color: var(--color-gray-400); font-size: 0.9rem; }
+.sidebar-link { display: block; width: 100%; text-align: left; padding: 0.625rem 0.75rem; border-radius: var(--radius); color: var(--color-gray-400); font-size: 0.9rem; background: none; border: none; cursor: pointer; font-family: inherit; }
+.sidebar-link:hover { background: rgba(255,255,255,0.05); color: white; }
 .sidebar-link.active { background: rgba(255,255,255,0.1); color: white; }
 .sidebar-footer { padding-top: 1rem; border-top: 1px solid var(--color-gray-700); }
 .main-content { flex: 1; margin-left: 220px; padding: 2rem; max-width: 1200px; }

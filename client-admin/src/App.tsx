@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
+import Layout from './components/Layout';
 
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem('client_token'));
@@ -12,5 +12,5 @@ export default function App() {
   }, []);
 
   if (!token) return <Login onLogin={() => setToken(localStorage.getItem('client_token'))} />;
-  return <Dashboard onLogout={() => { localStorage.removeItem('client_token'); setToken(null); }} />;
+  return <Layout onLogout={() => { localStorage.removeItem('client_token'); setToken(null); }} />;
 }
