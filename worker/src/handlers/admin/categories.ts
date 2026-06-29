@@ -43,6 +43,7 @@ export async function remove(c: Context<{ Bindings: Env }>) {
   const { tenantId, categoryId } = c.req.param();
   const existing = await queryOne(c.env, 'SELECT id FROM categories WHERE id = ? AND tenant_id = ?', [categoryId, tenantId]);
   if (!existing) return notFound('Category not found');
+  await execute(c.env, 'UPDATE products SET category_id = NULL WHERE category_id = ?', [categoryId]);
   await execute(c.env, 'DELETE FROM categories WHERE id = ?', [categoryId]);
   return json({ deleted: true });
 }
