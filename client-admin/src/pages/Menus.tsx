@@ -39,7 +39,7 @@ export default function Menus() {
   function openEdit(item: any) { setEditing(item); setForm({ label: item.label, anchor: item.anchor, parent_id: item.parent_id || '' }); setShowModal(true); }
 
   async function handleSave() {
-    if (!form.label.trim()) return showToast('La etiqueta es obligatoria', 'error');
+    if (!form.label.trim()) return showToast('La etiqueta del menú es obligatoria', 'error');
     try {
       const payload = { label: form.label.trim(), anchor: form.anchor, sort_order: 0, parent_id: form.parent_id || null };
       if (editing) {

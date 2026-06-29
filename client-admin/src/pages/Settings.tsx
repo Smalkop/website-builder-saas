@@ -53,7 +53,7 @@ export default function Settings() {
           footer_credit_enabled: settings.footer_credit_enabled ? 1 : 0,
         }),
       });
-      showToast('Guardado correctamente', 'success');
+      showToast('✓ Configuración guardada exitosamente', 'success');
     } catch (err: any) { showToast(err.message, 'error'); } finally { setSaving(false); }
   }
 

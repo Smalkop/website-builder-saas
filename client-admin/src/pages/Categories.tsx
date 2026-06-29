@@ -32,7 +32,7 @@ export default function Categories() {
   function openEdit(cat: Category) { setEditing(cat); setName(cat.name); setShowModal(true); }
 
   async function handleSave() {
-    if (!name.trim()) return showToast('El nombre es obligatorio', 'error');
+    if (!name.trim()) return showToast('El nombre de la categoría es obligatorio', 'error');
     try {
       if (editing) {
         await api(`/categories/${editing.id}`, { method: 'PUT', body: JSON.stringify({ name: name.trim() }) });

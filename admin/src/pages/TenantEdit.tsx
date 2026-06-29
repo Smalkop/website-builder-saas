@@ -64,7 +64,7 @@ export default function TenantEdit() {
         facebook_url: settings.facebook_url,
         instagram_url: settings.instagram_url,
       });
-      showToast('Guardado correctamente', 'success');
+      showToast('✓ Información guardada correctamente', 'success');
     } catch (err: any) {
       showToast(err.message, 'error');
     } finally {
@@ -86,7 +86,7 @@ export default function TenantEdit() {
         layout_type: settings.layout_type,
         footer_credit_enabled: settings.footer_credit_enabled ? 1 : 0,
       });
-      showToast('Guardado correctamente', 'success');
+      showToast('✓ Marca y colores actualizados con éxito', 'success');
     } catch (err: any) {
       showToast(err.message, 'error');
     } finally {
@@ -102,7 +102,7 @@ export default function TenantEdit() {
       const result = await createOrUpdateClientUser(id!, { email, name: tenant.name, regenerate: true });
       setClientUser({ ...clientUser, email: result.email });
       setClientPassword(result.password);
-      showToast(`Usuario creado. Email: ${result.email} | Contraseña: ${result.password} | Guarda esta contraseña, no se mostrará de nuevo.`, 'success');
+      showToast(`✓ Usuario creado — Email: ${result.email} | Clave: ${result.password} | Guardala, no se mostrará de nuevo.`, 'success');
     } catch (err: any) {
       showToast(err.message, 'error');
     } finally {
@@ -115,7 +115,7 @@ export default function TenantEdit() {
     setSaving(true);
     try {
       await updateTenant(id!, { max_products: tenant.max_products });
-      showToast('Límite guardado', 'success');
+      showToast('✓ Límite de productos actualizado correctamente', 'success');
     } catch (err: any) {
       showToast(err.message, 'error');
     } finally {

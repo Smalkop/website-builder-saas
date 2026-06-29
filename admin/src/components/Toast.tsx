@@ -7,18 +7,11 @@ interface ToastItem {
   type: ToastType;
 }
 
-const icons: Record<ToastType, string> = {
-  success: '✓',
-  error: '✕',
-  warning: '⚠',
-  info: 'ℹ',
-};
-
-const colors: Record<ToastType, string> = {
-  success: '#059669',
-  error: '#dc2626',
-  warning: '#d97706',
-  info: '#2563eb',
+const config: Record<ToastType, { icon: string; bg: string; border: string }> = {
+  success: { icon: '✅', bg: '#f0fdf4', border: '#22c55e' },
+  error: { icon: '❌', bg: '#fef2f2', border: '#ef4444' },
+  warning: { icon: '⚠️', bg: '#fffbeb', border: '#f59e0b' },
+  info: { icon: 'ℹ️', bg: '#eff6ff', border: '#3b82f6' },
 };
 
 export default function Toast() {
@@ -30,31 +23,38 @@ export default function Toast() {
       setToasts(prev => [...prev, toast]);
       setTimeout(() => {
         setToasts(prev => prev.filter(t => t.id !== id));
-      }, 3500);
+      }, 4000);
     });
   }, []);
 
   return (
     <div style={{
-      position: 'fixed', top: 16, right: 16, zIndex: 9999,
-      display: 'flex', flexDirection: 'column', gap: 8,
+      position: 'fixed', top: 20, right: 20, zIndex: 9999,
+      display: 'flex', flexDirection: 'column', gap: 10,
     }}>
-      {toasts.map(t => (
-        <div key={t.id} style={{
-          background: colors[t.type],
-          color: '#fff', padding: '12px 20px', borderRadius: 8,
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-          display: 'flex', alignItems: 'center', gap: 10,
-          fontSize: 14, lineHeight: 1.4, minWidth: 280, maxWidth: 420,
-          animation: 'slideIn 0.3s ease',
-        }}>
-          <span style={{ fontSize: 16, fontWeight: 700 }}>{icons[t.type]}</span>
-          <span>{t.message}</span>
-        </div>
-      ))}
+      {toasts.map(t => {
+        const cfg = config[t.type];
+        return (
+          <div key={t.id} style={{
+            background: cfg.bg,
+            border: `1.5px solid ${cfg.border}`,
+            borderRadius: 12,
+            padding: '14px 20px',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+            display: 'flex', alignItems: 'center', gap: 12,
+            fontSize: 14, lineHeight: 1.5,
+            minWidth: 300, maxWidth: 440,
+            color: '#1f2937',
+            animation: 'toastSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+          }}>
+            <span style={{ fontSize: 20, flexShrink: 0 }}>{cfg.icon}</span>
+            <span style={{ flex: 1 }}>{t.message}</span>
+          </div>
+        );
+      })}
       <style>{`
-        @keyframes slideIn {
-          from { transform: translateX(100%); opacity: 0; }
+        @keyframes toastSlideIn {
+          from { transform: translateX(120%); opacity: 0; }
           to { transform: translateX(0); opacity: 1; }
         }
       `}</style>

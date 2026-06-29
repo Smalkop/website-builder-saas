@@ -81,7 +81,7 @@ export default function Products() {
   }
 
   async function handleSave() {
-    if (!form.name) return showToast('El nombre es obligatorio', 'error');
+    if (!form.name) return showToast('El nombre del producto es obligatorio', 'error');
     setUploading(true);
     try {
       let images: string[] = editing ? (editing.images || []) : [];
