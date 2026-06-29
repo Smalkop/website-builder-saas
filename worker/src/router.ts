@@ -183,7 +183,8 @@ app.get('/admin*', async (c) => {
     return serveHtml(c, htmlKey);
   }
   if (url.pathname.startsWith('/admin/assets/')) {
-    const key = url.pathname.slice(1);
+    const prefix = tenantId ? 'client-admin' : 'admin';
+    const key = url.pathname.replace('/admin/', `${prefix}/`);
     const obj = await c.env.ASSETS.get(key);
     if (!obj) return new Response('Not found', { status: 404 });
     return serveAsset(obj, key);
