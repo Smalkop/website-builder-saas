@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getMenuItems, createMenuItem, updateMenuItem, deleteMenuItem } from '../api/client';
+import { showToast } from '../toast';
 
 const ANCHOR_OPTIONS = [
   { value: 'inicio', label: 'Inicio' },
@@ -44,7 +45,7 @@ export default function Menus() {
   }
 
   async function handleSave() {
-    if (!form.label.trim()) return alert('La etiqueta es obligatoria');
+    if (!form.label.trim()) return showToast('La etiqueta es obligatoria', 'error');
     try {
       const payload = { label: form.label.trim(), anchor: form.anchor, sort_order: 0, parent_id: form.parent_id || null };
       if (editing) {
@@ -55,7 +56,7 @@ export default function Menus() {
       setShowModal(false);
       load();
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     }
   }
 

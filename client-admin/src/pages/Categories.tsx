@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { showToast } from '../toast';
 
 interface Category { id: string; name: string; }
 
@@ -31,7 +32,7 @@ export default function Categories() {
   function openEdit(cat: Category) { setEditing(cat); setName(cat.name); setShowModal(true); }
 
   async function handleSave() {
-    if (!name.trim()) return alert('El nombre es obligatorio');
+    if (!name.trim()) return showToast('El nombre es obligatorio', 'error');
     try {
       if (editing) {
         await api(`/categories/${editing.id}`, { method: 'PUT', body: JSON.stringify({ name: name.trim() }) });
@@ -39,7 +40,7 @@ export default function Categories() {
         await api('/categories', { method: 'POST', body: JSON.stringify({ name: name.trim() }) });
       }
       setShowModal(false); load();
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { showToast(err.message, 'error'); }
   }
 
   async function handleDelete(catId: string) {

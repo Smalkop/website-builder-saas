@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getCategories, createCategory, updateCategory, deleteCategory } from '../api/client';
+import { showToast } from '../toast';
 
 export default function Categories() {
   const { id: tenantId } = useParams();
@@ -37,7 +38,7 @@ export default function Categories() {
   }
 
   async function handleSave() {
-    if (!name.trim()) return alert('El nombre es obligatorio');
+    if (!name.trim()) return showToast('El nombre es obligatorio', 'error');
     try {
       if (editing) {
         await updateCategory(tenantId!, editing.id, name.trim());
@@ -47,7 +48,7 @@ export default function Categories() {
       setShowModal(false);
       load();
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     }
   }
 

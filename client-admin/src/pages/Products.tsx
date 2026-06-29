@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { showToast } from '../toast';
 
 interface Props { onLogout: () => void; }
 
@@ -94,7 +95,7 @@ export default function Products({ onLogout }: Props) {
   }
 
   async function handleSave() {
-    if (!form.name) return alert('El nombre es obligatorio');
+    if (!form.name) return showToast('El nombre es obligatorio', 'error');
     setSaving(true);
     try {
       const imageUrl = await uploadImage();
@@ -108,7 +109,7 @@ export default function Products({ onLogout }: Props) {
         await api('/products', { method: 'POST', body: JSON.stringify({ ...payload, images: imageUrl ? [imageUrl] : [] }) });
       }
       setShowModal(false); load();
-    } catch (err: any) { alert(err.message); } finally { setSaving(false); }
+    } catch (err: any) { showToast(err.message, 'error'); } finally { setSaving(false); }
   }
 
   async function handleDelete(productId: string) {

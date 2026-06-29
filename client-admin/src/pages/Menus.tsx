@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { showToast } from '../toast';
 
 interface MenuItem { id: string; label: string; anchor: string; sort_order: number; parent_id: string | null; children?: MenuItem[]; }
 
@@ -38,7 +39,7 @@ export default function Menus() {
   function openEdit(item: any) { setEditing(item); setForm({ label: item.label, anchor: item.anchor, parent_id: item.parent_id || '' }); setShowModal(true); }
 
   async function handleSave() {
-    if (!form.label.trim()) return alert('La etiqueta es obligatoria');
+    if (!form.label.trim()) return showToast('La etiqueta es obligatoria', 'error');
     try {
       const payload = { label: form.label.trim(), anchor: form.anchor, sort_order: 0, parent_id: form.parent_id || null };
       if (editing) {
@@ -47,7 +48,7 @@ export default function Menus() {
         await api('/menus', { method: 'POST', body: JSON.stringify(payload) });
       }
       setShowModal(false); load();
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { showToast(err.message, 'error'); }
   }
 
   async function handleDelete(itemId: string) {

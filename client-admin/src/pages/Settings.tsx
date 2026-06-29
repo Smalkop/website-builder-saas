@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { showToast } from '../toast';
 
 interface Settings {
   tenant_id: string; logo_url: string | null; banner_url: string | null;
@@ -52,8 +53,8 @@ export default function Settings() {
           footer_credit_enabled: settings.footer_credit_enabled ? 1 : 0,
         }),
       });
-      alert('Guardado correctamente');
-    } catch (err: any) { alert(err.message); } finally { setSaving(false); }
+      showToast('Guardado correctamente', 'success');
+    } catch (err: any) { showToast(err.message, 'error'); } finally { setSaving(false); }
   }
 
   async function handleLogoUpload(file: File) {

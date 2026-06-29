@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getDomains, createDomain, verifyDomain, deleteDomain } from '../api/client';
+import { showToast } from '../toast';
 
 export default function Domains() {
   const { id: tenantId } = useParams();
@@ -31,7 +32,7 @@ export default function Domains() {
       setNewDomain('');
       load();
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     } finally {
       setAdding(false);
     }
@@ -42,7 +43,7 @@ export default function Domains() {
       await verifyDomain(tenantId!, domainId);
       load();
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     }
   }
 

@@ -8,6 +8,7 @@ import Domains from './pages/Domains';
 import Categories from './pages/Categories';
 import Menus from './pages/Menus';
 import Layout from './components/Layout';
+import Toast from './components/Toast';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = localStorage.getItem('admin_token');
@@ -19,7 +20,9 @@ export default function App() {
   const token = localStorage.getItem('admin_token');
 
   return (
-    <Routes>
+    <>
+      <Toast />
+      <Routes>
       <Route path="/login" element={token ? <Navigate to="/" replace /> : <Login />} />
       <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route index element={<Dashboard />} />
@@ -31,5 +34,6 @@ export default function App() {
         <Route path="tenants/:id/menus" element={<Menus />} />
       </Route>
     </Routes>
+    </>
   );
 }

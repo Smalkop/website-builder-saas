@@ -1,6 +1,7 @@
 import { useState, useEffect, FormEvent, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getTenant, updateTenant, getSettings, updateSettings, uploadImage, getClientUser, createOrUpdateClientUser } from '../api/client';
+import { showToast } from '../toast';
 
 export default function TenantEdit() {
   const { id } = useParams();
@@ -63,9 +64,9 @@ export default function TenantEdit() {
         facebook_url: settings.facebook_url,
         instagram_url: settings.instagram_url,
       });
-      alert('Guardado correctamente');
+      showToast('Guardado correctamente', 'success');
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     } finally {
       setSaving(false);
     }
@@ -85,9 +86,9 @@ export default function TenantEdit() {
         layout_type: settings.layout_type,
         footer_credit_enabled: settings.footer_credit_enabled ? 1 : 0,
       });
-      alert('Guardado correctamente');
+      showToast('Guardado correctamente', 'success');
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     } finally {
       setSaving(false);
     }
@@ -101,9 +102,9 @@ export default function TenantEdit() {
       const result = await createOrUpdateClientUser(id!, { email, name: tenant.name, regenerate: true });
       setClientUser({ ...clientUser, email: result.email });
       setClientPassword(result.password);
-      alert(`Usuario creado. Email: ${result.email}\nContraseña: ${result.password}\n\nGuarda esta contraseña, no se mostrará de nuevo.`);
+      showToast(`Usuario creado. Email: ${result.email} | Contraseña: ${result.password} | Guarda esta contraseña, no se mostrará de nuevo.`, 'success');
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     } finally {
       setClientLoading(false);
     }
@@ -114,9 +115,9 @@ export default function TenantEdit() {
     setSaving(true);
     try {
       await updateTenant(id!, { max_products: tenant.max_products });
-      alert('Límite guardado');
+      showToast('Límite guardado', 'success');
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     } finally {
       setSaving(false);
     }

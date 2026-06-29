@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getProducts, createProduct, updateProduct, deleteProduct, uploadImage, getCategories } from '../api/client';
+import { showToast } from '../toast';
 
 export default function Products() {
   const { id: tenantId } = useParams();
@@ -80,7 +81,7 @@ export default function Products() {
   }
 
   async function handleSave() {
-    if (!form.name) return alert('El nombre es obligatorio');
+    if (!form.name) return showToast('El nombre es obligatorio', 'error');
     setUploading(true);
     try {
       let images: string[] = editing ? (editing.images || []) : [];
@@ -108,7 +109,7 @@ export default function Products() {
       setShowModal(false);
       load();
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     } finally {
       setUploading(false);
     }
