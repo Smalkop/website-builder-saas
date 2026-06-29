@@ -120,10 +120,17 @@ publicApi.get('/categories', siteHandler.getCategories);
 
 app.route('/api/site', publicApi);
 
-app.get('/assets/:key', (c) => {
-  const key = c.req.param('key');
+app.get('/assets/*', async (c) => {
+  const url = new URL(c.req.url);
+  const key = url.pathname.replace(/^\/assets\//, '');
   if (!key) return json({ error: 'Invalid asset path' }, 400);
-  return storageHandler.serveAsset(c);
+  const object = await c.env.ASSETS.get(key);
+  if (!object) return json({ error: 'Asset not found' }, 404);
+  const headers = new Headers();
+  object.writeHttpMetadata(headers);
+  headers.set('Content-Type', mimeType(key));
+  headers.set('Cache-Control', 'public, max-age=31536000');
+  return new Response(object.body, { headers });
 });
 
 function mimeType(path: string): string {

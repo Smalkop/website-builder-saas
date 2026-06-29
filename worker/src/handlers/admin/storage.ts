@@ -50,7 +50,7 @@ function mimeType(path: string): string {
 }
 
 export async function serveAsset(c: Ctx) {
-  const key = c.req.param('key') || '';
+  const key = c.req.param('*') || '';
 
   const object = await c.env.ASSETS.get(key);
   if (!object) return error('Asset not found', 404);
