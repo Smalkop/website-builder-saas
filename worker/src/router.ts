@@ -131,6 +131,7 @@ publicApi.get('/products', siteHandler.getProducts);
 publicApi.get('/products/:productId', siteHandler.getProduct);
 publicApi.get('/menu', siteHandler.getMenu);
 publicApi.get('/categories', siteHandler.getCategories);
+publicApi.get('/attributes', siteHandler.getAttributes);
 
 app.route('/api/site', publicApi);
 
@@ -189,7 +190,7 @@ const ADMIN_HTML_KEY = 'admin/index.html';
 const CLIENT_ADMIN_HTML_KEY = 'client-admin/index.html';
 const CLIENT_SITE_HTML_KEY = 'site/index.html';
 
-app.get('/admin*', async (c) => {
+const adminHandler = async (c: any) => {
   const url = new URL(c.req.url);
   const tenantId = c.get('tenantId');
   const htmlKey = tenantId ? CLIENT_ADMIN_HTML_KEY : ADMIN_HTML_KEY;
@@ -204,7 +205,11 @@ app.get('/admin*', async (c) => {
     return serveAsset(obj, key);
   }
   return serveHtml(c, htmlKey);
-});
+};
+
+app.get('/admin', adminHandler);
+app.get('/admin/', adminHandler);
+app.get('/admin/*', adminHandler);
 
 app.get('*', async (c) => {
   const host = c.req.header('host') || '';
