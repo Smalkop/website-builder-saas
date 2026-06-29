@@ -70,8 +70,10 @@ export default function Dashboard() {
                   <td>{new Date(t.created_at).toLocaleDateString()}</td>
                   <td className="actions">
                     <button className="btn btn-sm" onClick={() => navigate(`/tenants/${t.id}`)}>Editar</button>
-                    <button className="btn btn-sm" onClick={() => navigate(`/tenants/${t.id}/products`)}>Productos</button>
-                    <button className="btn btn-sm" onClick={() => navigate(`/tenants/${t.id}/domains`)}>Dominios</button>
+                    <button className="btn btn-sm" onClick={() => navigate(`/tenants/${t.id}/products`)}>Prod.</button>
+                    <button className="btn btn-sm" onClick={() => navigate(`/tenants/${t.id}/categories`)}>Cat.</button>
+                    <button className="btn btn-sm" onClick={() => navigate(`/tenants/${t.id}/menus`)}>Menú</button>
+                    <button className="btn btn-sm" onClick={() => navigate(`/tenants/${t.id}/domains`)}>DNS</button>
                     <button className="btn btn-sm btn-warning" onClick={() => handleToggleStatus(t.id)}>
                       {t.status === 'active' ? 'Desactivar' : 'Activar'}
                     </button>

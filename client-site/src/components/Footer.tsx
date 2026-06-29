@@ -3,9 +3,10 @@ interface FooterProps {
   facebookUrl: string;
   instagramUrl: string;
   whatsappNumber: string;
+  footerCreditEnabled: number;
 }
 
-export default function Footer({ businessName, facebookUrl, instagramUrl, whatsappNumber }: FooterProps) {
+export default function Footer({ businessName, facebookUrl, instagramUrl, whatsappNumber, footerCreditEnabled }: FooterProps) {
   const year = new Date().getFullYear();
 
   return (
@@ -46,6 +47,11 @@ export default function Footer({ businessName, facebookUrl, instagramUrl, whatsa
 
       <div className="footer-bottom">
         <p>&copy; {year} {businessName}. Todos los derechos reservados.</p>
+        {footerCreditEnabled && (
+          <p className="footer-credit">
+            Creado con <a href="https://dash.brahian.dev" target="_blank" rel="noopener noreferrer">Panel de Negocios</a>
+          </p>
+        )}
       </div>
     </footer>
   );

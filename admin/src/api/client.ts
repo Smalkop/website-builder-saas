@@ -140,3 +140,62 @@ export async function uploadImage(tenantId: string, file: File) {
   if (!res.ok) throw new Error('Upload failed');
   return res.json();
 }
+
+export async function getCategories(tenantId: string) {
+  return request<any[]>(`/tenants/${tenantId}/categories`);
+}
+
+export async function createCategory(tenantId: string, name: string) {
+  return request<any>(`/tenants/${tenantId}/categories`, {
+    method: 'POST',
+    body: JSON.stringify({ name }),
+  });
+}
+
+export async function updateCategory(tenantId: string, categoryId: string, name: string) {
+  return request<any>(`/tenants/${tenantId}/categories/${categoryId}`, {
+    method: 'PUT',
+    body: JSON.stringify({ name }),
+  });
+}
+
+export async function deleteCategory(tenantId: string, categoryId: string) {
+  return request<any>(`/tenants/${tenantId}/categories/${categoryId}`, {
+    method: 'DELETE',
+  });
+}
+
+export async function getMenuItems(tenantId: string) {
+  return request<any[]>(`/tenants/${tenantId}/menus`);
+}
+
+export async function createMenuItem(tenantId: string, data: any) {
+  return request<any>(`/tenants/${tenantId}/menus`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateMenuItem(tenantId: string, itemId: string, data: any) {
+  return request<any>(`/tenants/${tenantId}/menus/${itemId}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteMenuItem(tenantId: string, itemId: string) {
+  return request<any>(`/tenants/${tenantId}/menus/${itemId}`, {
+    method: 'DELETE',
+  });
+}
+
+export async function getClientUser(tenantId: string) {
+  return request<any>(`/tenants/${tenantId}/client-user`);
+}
+
+export async function createOrUpdateClientUser(tenantId: string, data: any) {
+  return request<any>(`/tenants/${tenantId}/client-user`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}

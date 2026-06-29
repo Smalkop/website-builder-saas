@@ -1,13 +1,5 @@
 import { useEffect } from 'react';
-
-interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  images: string[];
-  category: string;
-}
+import { Product } from '../api';
 
 interface ProductDetailProps {
   product: Product;
@@ -27,6 +19,14 @@ export default function ProductDetail({ product, onClose }: ProductDetailProps) 
     };
   }, [onClose]);
 
+  function formatPrice(price: number) {
+    return new Intl.NumberFormat('es-PY', {
+      style: 'currency',
+      currency: 'PYG',
+      maximumFractionDigits: 0,
+    }).format(price);
+  }
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="product-detail-modal" onClick={e => e.stopPropagation()}>
@@ -41,16 +41,23 @@ export default function ProductDetail({ product, onClose }: ProductDetailProps) 
 
           <div className="product-detail-info">
             <h2 className="product-detail-name">{product.name}</h2>
-            {product.category && (
-              <span className="product-detail-category">{product.category}</span>
+            {product.category_name && (
+              <span className="product-detail-category">{product.category_name}</span>
             )}
-            <p className="product-detail-price">
-              {new Intl.NumberFormat('es-PY', {
-                style: 'currency',
-                currency: 'PYG',
-                maximumFractionDigits: 0,
-              }).format(product.price)}
-            </p>
+            <div className="product-detail-prices">
+              {product.offer_active && product.offer_price ? (
+                <>
+                  <p className="product-detail-price product-detail-price--offer">
+                    {formatPrice(product.offer_price)}
+                  </p>
+                  <p className="product-detail-price--original">
+                    {formatPrice(product.price)}
+                  </p>
+                </>
+              ) : (
+                <p className="product-detail-price">{formatPrice(product.price)}</p>
+              )}
+            </div>
             {product.description && (
               <p className="product-detail-desc">{product.description}</p>
             )}

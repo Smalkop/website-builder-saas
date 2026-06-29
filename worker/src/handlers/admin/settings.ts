@@ -24,7 +24,8 @@ export async function update(c: Context<{ Bindings: Env }>) {
   const fields = [
     'logo_url', 'banner_url', 'primary_color', 'secondary_color',
     'font_family', 'animations_enabled', 'layout_type', 'whatsapp_number',
-    'business_name', 'business_description', 'facebook_url', 'instagram_url'
+    'business_name', 'business_description', 'facebook_url', 'instagram_url',
+    'footer_credit_enabled'
   ];
 
   for (const field of fields) {

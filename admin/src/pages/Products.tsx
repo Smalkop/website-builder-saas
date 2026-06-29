@@ -1,20 +1,29 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getProducts, createProduct, updateProduct, deleteProduct } from '../api/client';
+import { getProducts, createProduct, updateProduct, deleteProduct, uploadImage, getCategories } from '../api/client';
 
 export default function Products() {
   const { id: tenantId } = useParams();
   const navigate = useNavigate();
   const [products, setProducts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<any>(null);
-  const [form, setForm] = useState({ name: '', description: '', price: '', category: '' });
+  const [form, setForm] = useState({ name: '', description: '', price: '', category_id: '', offer_price: '', offer_active: false });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function load() {
     try {
-      const data = await getProducts(tenantId!);
+      const [data, cats] = await Promise.all([
+        getProducts(tenantId!),
+        getCategories(tenantId!).catch(() => []),
+      ]);
       setProducts(data);
+      setCategories(cats);
     } catch (err) {
       console.error(err);
     } finally {
@@ -26,20 +35,71 @@ export default function Products() {
 
   function openCreate() {
     setEditing(null);
-    setForm({ name: '', description: '', price: '', category: '' });
+    setForm({ name: '', description: '', price: '', category_id: '', offer_price: '', offer_active: false });
+    setImageFile(null);
+    setImagePreview('');
     setShowModal(true);
   }
 
   function openEdit(p: any) {
     setEditing(p);
-    setForm({ name: p.name, description: p.description, price: String(p.price), category: p.category || '' });
+    setForm({
+      name: p.name,
+      description: p.description,
+      price: String(p.price),
+      category_id: p.category_id || '',
+      offer_price: p.offer_price ? String(p.offer_price) : '',
+      offer_active: !!p.offer_active,
+    });
+    setImageFile(null);
+    setImagePreview(p.images?.[0] || '');
     setShowModal(true);
+  }
+
+  function handleImageSelect(file: File) {
+    const canvas = document.createElement('canvas');
+    const size = 400;
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d')!;
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+    img.onload = () => {
+      const min = Math.min(img.width, img.height);
+      const sx = (img.width - min) / 2;
+      const sy = (img.height - min) / 2;
+      ctx.drawImage(img, sx, sy, min, min, 0, 0, size, size);
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        const cropped = new File([blob], 'product.webp', { type: 'image/webp' });
+        setImageFile(cropped);
+        setImagePreview(URL.createObjectURL(cropped));
+      }, 'image/webp', 85);
+    };
+    setImageFile(file);
   }
 
   async function handleSave() {
     if (!form.name) return alert('El nombre es obligatorio');
-    const payload = { ...form, price: parseFloat(form.price) || 0 };
+    setUploading(true);
     try {
+      let images: string[] = editing ? (editing.images || []) : [];
+
+      if (imageFile) {
+        const uploadResult = await uploadImage(tenantId!, imageFile);
+        images = [uploadResult.url];
+      }
+
+      const payload = {
+        name: form.name,
+        description: form.description,
+        price: parseFloat(form.price) || 0,
+        category_id: form.category_id || null,
+        images,
+        offer_price: form.offer_active ? (parseFloat(form.offer_price) || 0) : null,
+        offer_active: form.offer_active,
+      };
+
       if (editing) {
         await updateProduct(tenantId!, editing.id, payload);
       } else {
@@ -49,6 +109,8 @@ export default function Products() {
       load();
     } catch (err: any) {
       alert(err.message);
+    } finally {
+      setUploading(false);
     }
   }
 
@@ -80,9 +142,11 @@ export default function Products() {
           <table className="table">
             <thead>
               <tr>
+                <th>Imagen</th>
                 <th>Nombre</th>
                 <th>Precio</th>
-                <th>Categor&iacute;a</th>
+                <th>Oferta</th>
+                <th>Categoría</th>
                 <th>Estado</th>
                 <th>Acciones</th>
               </tr>
@@ -90,9 +154,21 @@ export default function Products() {
             <tbody>
               {products.map((p) => (
                 <tr key={p.id}>
+                  <td>
+                    {p.images?.[0] && (
+                      <img src={p.images[0]} alt="" style={{ width: 48, height: 48, borderRadius: 4, objectFit: 'cover' }} />
+                    )}
+                  </td>
                   <td>{p.name}</td>
                   <td>Gs. {p.price.toLocaleString()}</td>
-                  <td>{p.category || '—'}</td>
+                  <td>
+                    {p.offer_active ? (
+                      <span className="badge badge-warning">Gs. {p.offer_price?.toLocaleString()}</span>
+                    ) : (
+                      <span className="badge badge-secondary">—</span>
+                    )}
+                  </td>
+                  <td>{p.category_name || p.category || '—'}</td>
                   <td>
                     <span className={`badge ${p.active ? 'badge-success' : 'badge-danger'}`}>
                       {p.active ? 'Activo' : 'Inactivo'}
@@ -113,13 +189,13 @@ export default function Products() {
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h3>{editing ? 'Editar producto' : 'Nuevo producto'}</h3>
-            <div className="form">
+            <div className="form" style={{ maxWidth: '100%' }}>
               <div className="form-group">
                 <label>Nombre</label>
                 <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
               </div>
               <div className="form-group">
-                <label>Descripci&oacute;n</label>
+                <label>Descripción</label>
                 <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} />
               </div>
               <div className="form-row">
@@ -128,13 +204,46 @@ export default function Products() {
                   <input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
                 </div>
                 <div className="form-group">
-                  <label>Categor&iacute;a</label>
-                  <input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
+                  <label>Categoría</label>
+                  {categories.length > 0 ? (
+                    <select value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })}>
+                      <option value="">Sin categoría</option>
+                      {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                  ) : (
+                    <select disabled><option>Sin categorías disponibles</option></select>
+                  )}
                 </div>
               </div>
+
+              <div className="form-group">
+                <label>Imagen (cuadrada 1:1)</label>
+                {imagePreview && (
+                  <div style={{ marginBottom: '0.5rem' }}>
+                    <img src={imagePreview} alt="" style={{ width: 120, height: 120, borderRadius: 8, objectFit: 'cover', border: '1px solid var(--border-color)' }} />
+                  </div>
+                )}
+                <input type="file" accept="image/*" ref={fileInputRef} onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageSelect(f); }} />
+              </div>
+
+              <div className="form-group">
+                <label>
+                  <input type="checkbox" checked={form.offer_active} onChange={(e) => setForm({ ...form, offer_active: e.target.checked })} />
+                  &nbsp;En oferta
+                </label>
+              </div>
+              {form.offer_active && (
+                <div className="form-group">
+                  <label>Precio de oferta (Gs.)</label>
+                  <input type="number" value={form.offer_price} onChange={(e) => setForm({ ...form, offer_price: e.target.value })} />
+                </div>
+              )}
+
               <div className="form-actions">
                 <button className="btn" onClick={() => setShowModal(false)}>Cancelar</button>
-                <button className="btn btn-primary" onClick={handleSave}>Guardar</button>
+                <button className="btn btn-primary" onClick={handleSave} disabled={uploading}>
+                  {uploading ? 'Subiendo...' : 'Guardar'}
+                </button>
               </div>
             </div>
           </div>

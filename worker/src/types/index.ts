@@ -3,6 +3,7 @@ export interface Tenant {
   name: string;
   slug: string;
   status: 'active' | 'inactive';
+  max_products: number;
   created_at: string;
 }
 
@@ -29,6 +30,7 @@ export interface TenantSettings {
   business_description: string;
   facebook_url: string;
   instagram_url: string;
+  footer_credit_enabled: number;
 }
 
 export interface Product {
@@ -39,7 +41,37 @@ export interface Product {
   price: number;
   images: string;
   category: string;
+  category_id: string | null;
+  category_name: string;
   active: number;
+  offer_price: number | null;
+  offer_active: number;
+  created_at: string;
+}
+
+export interface Category {
+  id: string;
+  tenant_id: string;
+  name: string;
+  created_at: string;
+}
+
+export interface MenuItem {
+  id: string;
+  tenant_id: string;
+  label: string;
+  anchor: string;
+  sort_order: number;
+  parent_id: string | null;
+  created_at: string;
+}
+
+export interface ClientUser {
+  id: string;
+  tenant_id: string;
+  email: string;
+  password_hash: string;
+  name: string;
   created_at: string;
 }
 

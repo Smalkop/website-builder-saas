@@ -3,6 +3,7 @@ import { Env, Variables } from './types';
 import { cors } from './middleware/cors';
 import { resolveTenant } from './middleware/tenant';
 import { adminAuth } from './middleware/auth';
+import { clientAuth } from './middleware/client-auth';
 import { json } from './utils/response';
 
 import * as authHandler from './handlers/admin/auth';
@@ -11,7 +12,12 @@ import * as productsHandler from './handlers/admin/products';
 import * as domainsHandler from './handlers/admin/domains';
 import * as settingsHandler from './handlers/admin/settings';
 import * as storageHandler from './handlers/admin/storage';
+import * as categoriesHandler from './handlers/admin/categories';
+import * as menusHandler from './handlers/admin/menus';
+import * as clientUsersHandler from './handlers/admin/client-users';
 import * as siteHandler from './handlers/public/site';
+import * as clientAuthHandler from './handlers/client/auth';
+import * as clientProductsHandler from './handlers/client/products';
 
 type Bindings = { Bindings: Env; Variables: Variables };
 const app = new Hono<Bindings>();
@@ -21,9 +27,15 @@ app.use('*', resolveTenant);
 
 app.get('/api/health', (c) => json({ status: 'ok', timestamp: new Date().toISOString() }));
 
+// Admin login (no auth)
 const authLogin = new Hono<Bindings>();
 authLogin.post('/auth/login', authHandler.login);
 
+// Client login (no auth)
+const clientLogin = new Hono<Bindings>();
+clientLogin.post('/auth/login', clientAuthHandler.login);
+
+// Admin API (requires admin auth)
 const adminApi = new Hono<Bindings>();
 adminApi.use('*', adminAuth);
 
@@ -52,13 +64,42 @@ adminApi.delete('/tenants/:tenantId/domains/:domainId', domainsHandler.remove);
 
 adminApi.post('/tenants/:tenantId/upload', storageHandler.uploadImage);
 
+adminApi.get('/tenants/:tenantId/categories', categoriesHandler.list);
+adminApi.post('/tenants/:tenantId/categories', categoriesHandler.create);
+adminApi.put('/tenants/:tenantId/categories/:categoryId', categoriesHandler.update);
+adminApi.delete('/tenants/:tenantId/categories/:categoryId', categoriesHandler.remove);
+
+adminApi.get('/tenants/:tenantId/menus', menusHandler.list);
+adminApi.post('/tenants/:tenantId/menus', menusHandler.create);
+adminApi.put('/tenants/:tenantId/menus/:itemId', menusHandler.update);
+adminApi.delete('/tenants/:tenantId/menus/:itemId', menusHandler.remove);
+
+adminApi.get('/tenants/:tenantId/client-user', clientUsersHandler.get);
+adminApi.put('/tenants/:tenantId/client-user', clientUsersHandler.createOrUpdate);
+
 app.route('/api/admin', authLogin);
 app.route('/api/admin', adminApi);
 
+// Client API (requires client auth)
+const clientApi = new Hono<Bindings>();
+clientApi.use('*', clientAuth);
+clientApi.get('/products', clientProductsHandler.list);
+clientApi.get('/products/:productId', clientProductsHandler.get);
+clientApi.post('/products', clientProductsHandler.create);
+clientApi.put('/products/:productId', clientProductsHandler.update);
+clientApi.delete('/products/:productId', clientProductsHandler.remove);
+clientApi.post('/upload', clientProductsHandler.uploadImage);
+
+app.route('/api/client', clientLogin);
+app.route('/api/client', clientApi);
+
+// Public site API
 const publicApi = new Hono<Bindings>();
 publicApi.get('/config', siteHandler.getConfig);
 publicApi.get('/products', siteHandler.getProducts);
 publicApi.get('/products/:productId', siteHandler.getProduct);
+publicApi.get('/menu', siteHandler.getMenu);
+publicApi.get('/categories', siteHandler.getCategories);
 
 app.route('/api/site', publicApi);
 
@@ -88,7 +129,7 @@ function mimeType(path: string): string {
   return types[ext] || 'application/octet-stream';
 }
 
-async function serveAsset(obj: R2Object, path: string): Promise<Response> {
+async function serveAsset(obj: any, path: string): Promise<Response> {
   const headers = new Headers();
   obj.writeHttpMetadata(headers);
   headers.set('Content-Type', mimeType(path));
@@ -107,6 +148,8 @@ async function serveHtml(c: any, key: string): Promise<Response> {
 }
 
 const ADMIN_HTML_KEY = 'admin/index.html';
+const CLIENT_ADMIN_HTML_KEY = 'client-admin/index.html';
+const CLIENT_SITE_HTML_KEY = 'site/index.html';
 
 app.get('/admin*', async (c) => {
   const url = new URL(c.req.url);
@@ -121,20 +164,6 @@ app.get('/admin*', async (c) => {
   }
   return serveHtml(c, ADMIN_HTML_KEY);
 });
-
-const CLIENT_SPA = `<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mi Sitio Web</title>
-  <link rel="stylesheet" href="/site/assets/index.css" />
-</head>
-<body>
-  <div id="root"></div>
-  <script type="module" src="/site/assets/index.js"></script>
-</body>
-</html>`;
 
 app.get('*', async (c) => {
   const host = c.req.header('host') || '';
@@ -152,9 +181,13 @@ app.get('*', async (c) => {
       if (!obj) return new Response('Not found', { status: 404 });
       return serveAsset(obj, key);
     }
-    return new Response(CLIENT_SPA, {
-      headers: { 'Content-Type': 'text/html; charset=utf-8' },
-    });
+    if (url.pathname === '/' || url.pathname.startsWith('/site/')) {
+      return serveHtml(c, CLIENT_SITE_HTML_KEY);
+    }
+    if (url.pathname.startsWith('/admin/')) {
+      return serveHtml(c, CLIENT_ADMIN_HTML_KEY);
+    }
+    return serveHtml(c, CLIENT_SITE_HTML_KEY);
   }
 
   return new Response('Website Builder SaaS — brahian.dev', {

@@ -1,7 +1,9 @@
 import { Context } from 'hono';
-import { Env, Product } from '../../types';
+import { Env, Variables, Product } from '../../types';
 import { query, queryOne, execute } from '../../utils/db';
 import { json, error, notFound } from '../../utils/response';
+
+type Ctx = Context<{ Bindings: Env; Variables: Variables }>;
 
 function generateId(): string {
   return crypto.randomUUID();
@@ -13,8 +15,8 @@ const PRODUCT_SELECT = `
   LEFT JOIN categories c ON c.id = p.category_id
 `;
 
-export async function list(c: Context<{ Bindings: Env }>) {
-  const { tenantId } = c.req.param();
+export async function list(c: Ctx) {
+  const tenantId = c.get('tenantId');
   const products = await query<Product>(
     c.env,
     `${PRODUCT_SELECT} WHERE p.tenant_id = ? ORDER BY p.created_at DESC`,
@@ -23,8 +25,9 @@ export async function list(c: Context<{ Bindings: Env }>) {
   return json(products);
 }
 
-export async function get(c: Context<{ Bindings: Env }>) {
-  const { tenantId, productId } = c.req.param();
+export async function get(c: Ctx) {
+  const tenantId = c.get('tenantId');
+  const { productId } = c.req.param();
   const product = await queryOne<Product>(
     c.env,
     `${PRODUCT_SELECT} WHERE p.id = ? AND p.tenant_id = ?`,
@@ -34,11 +37,10 @@ export async function get(c: Context<{ Bindings: Env }>) {
   return json(product);
 }
 
-export async function create(c: Context<{ Bindings: Env }>) {
-  const { tenantId } = c.req.param();
+export async function create(c: Ctx) {
+  const tenantId = c.get('tenantId');
   const body = await c.req.json();
   const { name, description, price, images, category_id, offer_price, offer_active } = body;
-
   if (!name) return error('Product name is required');
 
   const tenant = await queryOne<{ max_products: number }>(c.env, 'SELECT max_products FROM tenants WHERE id = ?', [tenantId]);
@@ -52,21 +54,17 @@ export async function create(c: Context<{ Bindings: Env }>) {
     'INSERT INTO products (id, tenant_id, name, description, price, images, category_id, offer_price, offer_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
     [id, tenantId, name, description || '', price || 0, JSON.stringify(images || []), category_id || null, offer_price || null, offer_active ? 1 : 0]
   );
-
   const product = await queryOne<Product>(c.env, `${PRODUCT_SELECT} WHERE p.id = ?`, [id]);
   return json(product, 201);
 }
 
-export async function update(c: Context<{ Bindings: Env }>) {
-  const { tenantId, productId } = c.req.param();
+export async function update(c: Ctx) {
+  const tenantId = c.get('tenantId');
+  const { productId } = c.req.param();
   const body = await c.req.json();
   const { name, description, price, images, category_id, active, offer_price, offer_active } = body;
 
-  const existing = await queryOne<Product>(
-    c.env,
-    `${PRODUCT_SELECT} WHERE p.id = ? AND p.tenant_id = ?`,
-    [productId, tenantId]
-  );
+  const existing = await queryOne<Product>(c.env, `${PRODUCT_SELECT} WHERE p.id = ? AND p.tenant_id = ?`, [productId, tenantId]);
   if (!existing) return notFound('Product not found');
 
   if (name !== undefined) await execute(c.env, 'UPDATE products SET name = ? WHERE id = ?', [name, productId]);
@@ -82,15 +80,23 @@ export async function update(c: Context<{ Bindings: Env }>) {
   return json(product);
 }
 
-export async function remove(c: Context<{ Bindings: Env }>) {
-  const { tenantId, productId } = c.req.param();
-  const existing = await queryOne<Product>(
-    c.env,
-    'SELECT * FROM products WHERE id = ? AND tenant_id = ?',
-    [productId, tenantId]
-  );
+export async function remove(c: Ctx) {
+  const tenantId = c.get('tenantId');
+  const { productId } = c.req.param();
+  const existing = await queryOne<Product>(c.env, 'SELECT * FROM products WHERE id = ? AND tenant_id = ?', [productId, tenantId]);
   if (!existing) return notFound('Product not found');
-
   await execute(c.env, 'DELETE FROM products WHERE id = ?', [productId]);
   return json({ deleted: true });
+}
+
+export async function uploadImage(c: Ctx) {
+  const tenantId = c.get('tenantId');
+  const body = await c.req.parseBody();
+  const file = body.file as File | null;
+  if (!file) return error('No file provided');
+  const ext = file.name.split('.').pop() || 'png';
+  const key = `${tenantId}/${crypto.randomUUID()}.${ext}`;
+  await c.env.ASSETS.put(key, await file.arrayBuffer(), { httpMetadata: { contentType: file.type } });
+  const publicUrl = `${new URL(c.req.url).origin}/assets/${key}`;
+  return json({ url: publicUrl, key }, 201);
 }

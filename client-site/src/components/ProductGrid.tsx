@@ -1,33 +1,34 @@
 import { useState } from 'react';
 import ProductDetail from './ProductDetail';
-
-interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  images: string[];
-  category: string;
-}
+import { Product, Category } from '../api';
 
 interface ProductGridProps {
   products: Product[];
+  categories: Category[];
 }
 
-export default function ProductGrid({ products }: ProductGridProps) {
+export default function ProductGrid({ products, categories }: ProductGridProps) {
   const [selected, setSelected] = useState<Product | null>(null);
   const [filter, setFilter] = useState('');
 
-  const categories = [...new Set(products.map(p => p.category).filter(Boolean))];
+  const activeCategories = categories.filter(c => products.some(p => p.category_id === c.id));
   const filtered = filter
-    ? products.filter(p => p.category === filter)
+    ? products.filter(p => p.category_id === filter)
     : products;
 
+  function formatPrice(price: number) {
+    return new Intl.NumberFormat('es-PY', {
+      style: 'currency',
+      currency: 'PYG',
+      maximumFractionDigits: 0,
+    }).format(price);
+  }
+
   return (
-    <section className="products-section">
+    <div className="products-section">
       <h2 className="section-title">Nuestros Productos</h2>
 
-      {categories.length > 0 && (
+      {activeCategories.length > 0 && (
         <div className="category-filters">
           <button
             className={`category-btn ${!filter ? 'active' : ''}`}
@@ -35,13 +36,13 @@ export default function ProductGrid({ products }: ProductGridProps) {
           >
             Todos
           </button>
-          {categories.map(cat => (
+          {activeCategories.map(cat => (
             <button
-              key={cat}
-              className={`category-btn ${filter === cat ? 'active' : ''}`}
-              onClick={() => setFilter(cat)}
+              key={cat.id}
+              className={`category-btn ${filter === cat.id ? 'active' : ''}`}
+              onClick={() => setFilter(cat.name)}
             >
-              {cat}
+              {cat.name}
             </button>
           ))}
         </div>
@@ -65,13 +66,20 @@ export default function ProductGrid({ products }: ProductGridProps) {
               {product.description && (
                 <p className="product-card-desc">{product.description}</p>
               )}
-              <p className="product-card-price">
-                {new Intl.NumberFormat('es-PY', {
-                  style: 'currency',
-                  currency: 'PYG',
-                  maximumFractionDigits: 0,
-                }).format(product.price)}
-              </p>
+              <div className="product-card-prices">
+                {product.offer_active && product.offer_price ? (
+                  <>
+                    <p className="product-card-price product-card-price--offer">
+                      {formatPrice(product.offer_price)}
+                    </p>
+                    <p className="product-card-price--original">
+                      {formatPrice(product.price)}
+                    </p>
+                  </>
+                ) : (
+                  <p className="product-card-price">{formatPrice(product.price)}</p>
+                )}
+              </div>
             </div>
           </div>
         ))}
@@ -80,6 +88,6 @@ export default function ProductGrid({ products }: ProductGridProps) {
       {selected && (
         <ProductDetail product={selected} onClose={() => setSelected(null)} />
       )}
-    </section>
+    </div>
   );
 }

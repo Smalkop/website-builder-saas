@@ -27,7 +27,7 @@ export async function get(c: Context<{ Bindings: Env }>) {
 
 export async function create(c: Context<{ Bindings: Env }>) {
   const body = await c.req.json();
-  const { name, slug, primary_color, secondary_color, whatsapp_number, business_name, custom_domain } = body;
+  const { name, slug, primary_color, secondary_color, whatsapp_number, business_name, custom_domain, max_products } = body;
 
   if (!name || !slug) return error('Name and slug are required');
 
@@ -36,7 +36,7 @@ export async function create(c: Context<{ Bindings: Env }>) {
   const platformDomain = c.env.PLATFORM_DOMAIN;
   const subdomain = `${normalizedSlug}.${platformDomain}`;
 
-  await execute(c.env, 'INSERT INTO tenants (id, name, slug) VALUES (?, ?, ?)', [id, name, normalizedSlug]);
+  await execute(c.env, 'INSERT INTO tenants (id, name, slug, max_products) VALUES (?, ?, ?, ?)', [id, name, normalizedSlug, max_products || 50]);
 
   await execute(c.env, `
     INSERT INTO tenant_settings (tenant_id, business_name, primary_color, secondary_color, whatsapp_number)
@@ -64,7 +64,7 @@ export async function create(c: Context<{ Bindings: Env }>) {
 export async function update(c: Context<{ Bindings: Env }>) {
   const { id } = c.req.param();
   const body = await c.req.json();
-  const { name, slug, status } = body;
+  const { name, slug, status, max_products } = body;
 
   const existing = await queryOne<{ slug: string }>(c.env, 'SELECT slug FROM tenants WHERE id = ?', [id]);
   if (!existing) return notFound('Tenant not found');
@@ -81,6 +81,7 @@ export async function update(c: Context<{ Bindings: Env }>) {
     await invalidateTenantCache(c.env, existing.slug);
   }
   if (status) await execute(c.env, 'UPDATE tenants SET status = ? WHERE id = ?', [status, id]);
+  if (max_products !== undefined) await execute(c.env, 'UPDATE tenants SET max_products = ? WHERE id = ?', [max_products, id]);
 
   const tenant = await queryOne<Tenant>(c.env, 'SELECT * FROM tenants WHERE id = ?', [id]);
   return json(tenant);
