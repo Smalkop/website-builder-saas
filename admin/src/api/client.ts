@@ -231,17 +231,17 @@ export async function reorderAttributes(tenantId: string, order: string[]) {
   });
 }
 
-export async function createAttributeValue(tenantId: string, attributeId: string, value: string) {
+export async function createAttributeValue(tenantId: string, attributeId: string, value: string, color_hex: string | null = null) {
   return request<any>(`/tenants/${tenantId}/attributes/${attributeId}/values`, {
     method: 'POST',
-    body: JSON.stringify({ value }),
+    body: JSON.stringify({ value, color_hex }),
   });
 }
 
-export async function updateAttributeValue(tenantId: string, attributeId: string, valueId: string, value: string) {
+export async function updateAttributeValue(tenantId: string, attributeId: string, valueId: string, value: string, color_hex: string | null = null) {
   return request<any>(`/tenants/${tenantId}/attributes/${attributeId}/values/${valueId}`, {
     method: 'PUT',
-    body: JSON.stringify({ value }),
+    body: JSON.stringify({ value, color_hex }),
   });
 }
 

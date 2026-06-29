@@ -22,6 +22,7 @@ export default function TenantEdit() {
   const [showAttrModal, setShowAttrModal] = useState(false);
   const [editingValue, setEditingValue] = useState<{ attrId: string; value: any } | null>(null);
   const [valueInput, setValueInput] = useState('');
+  const [valueColorHex, setValueColorHex] = useState('');
   const [showValueModal, setShowValueModal] = useState(false);
   const [addingValueForAttr, setAddingValueForAttr] = useState<string | null>(null);
 
@@ -191,28 +192,31 @@ export default function TenantEdit() {
     }
   }
 
-  function openValueCreate(attrId: string) {
-    setAddingValueForAttr(attrId);
-    setEditingValue(null);
-    setValueInput('');
-    setShowValueModal(true);
-  }
-
   function openValueEdit(attrId: string, val: any) {
     setAddingValueForAttr(attrId);
     setEditingValue({ attrId, value: val });
     setValueInput(val.value);
+    setValueColorHex(val.color_hex || '');
+    setShowValueModal(true);
+  }
+
+  function openValueCreate(attrId: string) {
+    setAddingValueForAttr(attrId);
+    setEditingValue(null);
+    setValueInput('');
+    setValueColorHex('');
     setShowValueModal(true);
   }
 
   async function handleValueSave() {
     if (!valueInput || !addingValueForAttr) return showToast('El valor es obligatorio', 'error');
     try {
+      const payload = { value: valueInput, color_hex: valueColorHex || null };
       if (editingValue) {
-        await updateAttributeValue(id!, addingValueForAttr, editingValue.value.id, valueInput);
+        await updateAttributeValue(id!, addingValueForAttr, editingValue.value.id, payload.value, payload.color_hex);
         showToast('✓ Valor actualizado', 'success');
       } else {
-        await createAttributeValue(id!, addingValueForAttr, valueInput);
+        await createAttributeValue(id!, addingValueForAttr, payload.value, payload.color_hex);
         showToast('✓ Valor agregado', 'success');
       }
       setShowValueModal(false);
@@ -435,6 +439,7 @@ export default function TenantEdit() {
                               <button className="btn-icon-sm" onClick={() => moveValue(ai, vi, -1)} disabled={vi === 0}>↑</button>
                               <button className="btn-icon-sm" onClick={() => moveValue(ai, vi, 1)} disabled={vi === attr.values.length - 1}>↓</button>
                             </div>
+                            {val.color_hex ? <span className="color-swatch" style={{ backgroundColor: val.color_hex }} title={val.value} /> : null}
                             <span>{val.value}</span>
                             <button className="btn-icon-sm" onClick={() => openValueEdit(attr.id, val)} title="Editar">✎</button>
                             <button className="btn-icon-sm btn-icon-danger" onClick={() => handleValueDelete(attr.id, val.id)} title="Eliminar">×</button>
@@ -532,6 +537,15 @@ export default function TenantEdit() {
               <div className="form-group">
                 <label>Valor</label>
                 <input value={valueInput} onChange={(e) => setValueInput(e.target.value)} placeholder="Ej: Rojo, S, Algodón" required />
+              </div>
+              <div className="form-group">
+                <label>
+                  Color (opcional — si es un color, aparecerá como círculo)
+                </label>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <input type="color" value={valueColorHex || '#000000'} onChange={(e) => setValueColorHex(e.target.value)} style={{ width: 48, height: 48, padding: 2, border: '1px solid var(--color-gray-300)', borderRadius: 'var(--radius)', cursor: 'pointer' }} />
+                  <input value={valueColorHex} onChange={(e) => setValueColorHex(e.target.value)} placeholder="#RRGGBB" style={{ flex: 1, padding: '0.5rem 0.75rem', border: '1px solid var(--color-gray-300)', borderRadius: 'var(--radius)', fontSize: '0.875rem', fontFamily: 'monospace' }} />
+                </div>
               </div>
               <div className="form-actions">
                 <button className="btn" onClick={() => setShowValueModal(false)}>Cancelar</button>

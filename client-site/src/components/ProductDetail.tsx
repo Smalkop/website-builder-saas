@@ -122,10 +122,15 @@ export default function ProductDetail({ product, onClose, attributes, whatsappNu
                       {attr.values.map(val => (
                         <button
                           key={val.id}
-                          className={`variant-option ${selections[attr.id] === val.value ? 'selected' : ''}`}
+                          className={`variant-option ${selections[attr.id] === val.value ? (val.color_hex ? 'selected-color' : 'selected') : ''} ${val.color_hex ? 'variant-color' : ''}`}
                           onClick={() => handleSelect(attr.id, val.value)}
+                          title={val.value}
                         >
-                          {val.value}
+                          {val.color_hex ? (
+                            <span className="color-circle" style={{ backgroundColor: val.color_hex }} />
+                          ) : (
+                            val.value
+                          )}
                         </button>
                       ))}
                     </div>

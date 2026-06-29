@@ -109,7 +109,7 @@ export async function createValue(c: Ctx) {
   );
   if (!attr) return notFound('Attribute not found');
   const body = await c.req.json();
-  const { value } = body;
+  const { value, color_hex } = body;
   if (!value) return error('Value is required');
   const id = generateId();
   const maxSort = await queryOne<{ max: number }>(
@@ -119,8 +119,8 @@ export async function createValue(c: Ctx) {
   );
   const sortOrder = (maxSort?.max ?? -1) + 1;
   await execute(c.env,
-    'INSERT INTO attribute_values (id, attribute_id, value, sort_order) VALUES (?, ?, ?, ?)',
-    [id, attributeId, value, sortOrder]
+    'INSERT INTO attribute_values (id, attribute_id, value, color_hex, sort_order) VALUES (?, ?, ?, ?, ?)',
+    [id, attributeId, value, color_hex || null, sortOrder]
   );
   const created = await queryOne<AttributeValue>(c.env, 'SELECT * FROM attribute_values WHERE id = ?', [id]);
   return json(created, 201);
@@ -139,8 +139,9 @@ export async function updateValue(c: Ctx) {
   );
   if (!existing) return notFound('Value not found');
   const body = await c.req.json();
-  const { value } = body;
+  const { value, color_hex } = body;
   if (value !== undefined) await execute(c.env, 'UPDATE attribute_values SET value = ? WHERE id = ?', [value, valueId]);
+  if (color_hex !== undefined) await execute(c.env, 'UPDATE attribute_values SET color_hex = ? WHERE id = ?', [color_hex || null, valueId]);
   const updated = await queryOne<AttributeValue>(c.env, 'SELECT * FROM attribute_values WHERE id = ?', [valueId]);
   return json(updated);
 }

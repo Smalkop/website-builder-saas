@@ -100,6 +100,7 @@ export interface AttributeValue {
   id: string;
   attribute_id: string;
   value: string;
+  color_hex: string | null;
   sort_order: number;
   created_at: string;
 }

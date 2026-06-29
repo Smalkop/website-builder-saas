@@ -19,13 +19,14 @@ Build and deploy a multi-tenant Website Builder SaaS on Cloudflare Workers, with
 - Client Admin SPA (`client-admin/`): Vite + React — Login, Layout with sidebar navigation (Products, Categories, Variantes, Menus, Settings), product CRUD with image upload, category CRUD, menu CRUD, variant value management (add values to existing attributes), settings management
 - Client SPA (`client-site/`): Vite + React — Navbar, Hero, ProductGrid, ProductDetail with variant selectors (Color, Talle, Material, etc.) and WhatsApp consult button that builds message from selected variants, AboutSection, Footer, WhatsAppButton
 - Schema migration `005_variants.sql`: added `product_attributes` and `attribute_values` tables + `variants_enabled` column to tenant_settings
+- Schema migration `006_color_hex.sql`: added `color_hex` TEXT column to `attribute_values`
 - Variant system: admin CRUD for attributes + values per tenant, reorder via up/down buttons, required/optional toggle, active/inactive toggle
+- Color picker for attribute values: when `color_hex` is set, the value renders as a colored circle in client-site ProductDetail (instead of text pill); admin and client-admin show a color swatch in value chips
 - WhatsApp button in ProductDetail builds message with selected variant values; if required attribute not selected, shows error and prevents opening WhatsApp
 - Responsive admin: sidebar collapses on mobile, tabs scrollable, form rows stack vertically
 - All 3 SPAs built, uploaded to R2 (`panel-assets` bucket) with correct Content-Type
-- Worker deployed (current version: 936e9687) — routes: `dash.brahian.dev/*`, `*.brahian.dev/*`
+- Worker deployed (current version: e35be6fb) — routes: `dash.brahian.dev/*`, `*.brahian.dev/*`
 - DNS records auto-created/deleted on tenant create/update/delete with slug normalization (lowercase)
-- Git pushed to origin/main (latest: 57ff7cd)
 
 ### In Progress
 - (none — all features implemented)
@@ -45,6 +46,7 @@ Build and deploy a multi-tenant Website Builder SaaS on Cloudflare Workers, with
 - Product offers stored as separate column values (`offer_price`, `offer_active`) for simple price display logic in client site
 - `products.images` remains JSON TEXT field (not separate table) — pragmatic choice to avoid N+1 queries for a small app
 - `products.category` normalized to FK `category_id` referencing `categories.id` — migration nullifies on category delete via code
+- Color-`hex` column on `attribute_values` (nullable) — only set when the value represents a color; front-end renders colored circles when `color_hex` is present, otherwise renders a text pill
 
 ## Next Steps
 - (none — all features implemented, ready for user testing)
@@ -59,6 +61,7 @@ Build and deploy a multi-tenant Website Builder SaaS on Cloudflare Workers, with
 - PowerShell quoting issues when passing JSON to curl.exe — use file-based payload (`-d @file.json`) instead of inline strings
 - Wrangler v4.86+ defaults to LOCAL R2 emulator — must pass `--remote` flag for all `r2 object` commands to upload to production bucket
 - Existing tenant "dyc" (Relojes D&C) has no products, categories, or menu items yet — fully functional for testing
+- Attribute values with `color_hex` populated render as colored circles; without it render as regular text pills
 
 ## Relevant Files
 - `worker/src/router.ts`: main routing, all API routes, admin/client/client-admin SPA serving from R2, catch-all with tenant resolution
@@ -86,7 +89,8 @@ Build and deploy a multi-tenant Website Builder SaaS on Cloudflare Workers, with
 - `schema/003_features.sql`: migration with client_users, categories, menu_items tables and alters
 - `schema/004_normalize.sql`: migration adding products.category_id FK + data migration
 - `schema/005_variants.sql`: migration adding product_attributes + attribute_values tables + variants_enabled column
+- `schema/006_color_hex.sql`: migration adding color_hex column to attribute_values
 - `wrangler.toml`: Worker config, binds, routes, env vars incl. CLOUDFLARE_ZONE_ID
 - `admin/src/`: admin SPA — all pages (Dashboard, TenantCreate, TenantEdit, Products, Domains, Categories, Menus); App.tsx routes; api/client.ts
 - `client-admin/src/`: client-admin SPA — Components (Layout with sidebar), pages (Products, Categories, Menus, Settings, Login); App.tsx with page-state routing
-- `client-site/src/`: client SPA — components (ThemeProvider, Navbar, Hero, ProductGrid with offers, ProductDetail with offers, AboutSection, WhatsAppButton, Footer with credit toggle); api.ts with all public endpoints
+- `client-site/src/`: client SPA — components (ThemeProvider, Navbar, Hero, ProductGrid with offers, ProductDetail with offers, variant color-circle selectors, AboutSection, WhatsAppButton, Footer with credit toggle); api.ts with all public endpoints

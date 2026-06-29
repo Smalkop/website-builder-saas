@@ -15,6 +15,7 @@ export default function Variants() {
   const [loading, setLoading] = useState(true);
   const [addingValueFor, setAddingValueFor] = useState<string | null>(null);
   const [valueInput, setValueInput] = useState('');
+  const [valueColorHex, setValueColorHex] = useState('');
 
   async function load() {
     try {
@@ -34,10 +35,11 @@ export default function Variants() {
     try {
       await api(`/attributes/${attrId}/values`, {
         method: 'POST',
-        body: JSON.stringify({ value: valueInput.trim() }),
+        body: JSON.stringify({ value: valueInput.trim(), color_hex: valueColorHex || null }),
       });
       showToast('✓ Valor agregado correctamente', 'success');
       setValueInput('');
+      setValueColorHex('');
       setAddingValueFor(null);
       load();
     } catch (err: any) {
@@ -72,6 +74,7 @@ export default function Variants() {
                   <div className="values-grid">
                     {attr.values.map((val: any) => (
                       <div key={val.id} className="value-chip" style={{ cursor: 'default' }}>
+                        {val.color_hex ? <span className="color-swatch" style={{ backgroundColor: val.color_hex, display: 'inline-block', width: 16, height: 16, borderRadius: '50%', marginRight: 4, verticalAlign: 'middle', border: '1px solid var(--border-color)' }} /> : null}
                         <span>{val.value}</span>
                       </div>
                     ))}
@@ -81,20 +84,26 @@ export default function Variants() {
                 )}
 
                 {addingValueFor === attr.id ? (
-                  <div style={{ display: 'flex', gap: '0.375rem', marginTop: '0.5rem', alignItems: 'center' }}>
-                    <input
-                      value={valueInput}
-                      onChange={(e) => setValueInput(e.target.value)}
-                      placeholder="Nuevo valor"
-                      style={{ flex: 1, padding: '0.375rem 0.5rem', border: '1px solid var(--border-color)', borderRadius: 'var(--radius)', fontSize: '0.8rem' }}
-                      onKeyDown={(e) => { if (e.key === 'Enter') handleAddValue(attr.id); if (e.key === 'Escape') { setAddingValueFor(null); setValueInput(''); } }}
-                      autoFocus
-                    />
-                    <button className="btn btn-sm btn-primary" onClick={() => handleAddValue(attr.id)}>Agregar</button>
-                    <button className="btn btn-sm" onClick={() => { setAddingValueFor(null); setValueInput(''); }}>Cancelar</button>
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <div style={{ display: 'flex', gap: '0.375rem', alignItems: 'center', marginBottom: '0.375rem' }}>
+                      <input
+                        value={valueInput}
+                        onChange={(e) => setValueInput(e.target.value)}
+                        placeholder="Nuevo valor"
+                        style={{ flex: 1, padding: '0.375rem 0.5rem', border: '1px solid var(--border-color)', borderRadius: 'var(--radius)', fontSize: '0.8rem' }}
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleAddValue(attr.id); if (e.key === 'Escape') { setAddingValueFor(null); setValueInput(''); setValueColorHex(''); } }}
+                        autoFocus
+                      />
+                      <button className="btn btn-sm btn-primary" onClick={() => handleAddValue(attr.id)}>Agregar</button>
+                      <button className="btn btn-sm" onClick={() => { setAddingValueFor(null); setValueInput(''); setValueColorHex(''); }}>Cancelar</button>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.375rem', alignItems: 'center' }}>
+                      <input type="color" value={valueColorHex || '#000000'} onChange={(e) => setValueColorHex(e.target.value)} style={{ width: 36, height: 36, padding: 2, border: '1px solid var(--border-color)', borderRadius: 'var(--radius)', cursor: 'pointer' }} />
+                      <input value={valueColorHex} onChange={(e) => setValueColorHex(e.target.value)} placeholder="#RRGGBB (opcional — color)" style={{ flex: 1, padding: '0.375rem 0.5rem', border: '1px solid var(--border-color)', borderRadius: 'var(--radius)', fontSize: '0.8rem', fontFamily: 'monospace' }} />
+                    </div>
                   </div>
                 ) : (
-                  <button className="btn btn-sm" style={{ marginTop: '0.5rem' }} onClick={() => { setAddingValueFor(attr.id); setValueInput(''); }}>
+                  <button className="btn btn-sm" style={{ marginTop: '0.5rem' }} onClick={() => { setAddingValueFor(attr.id); setValueInput(''); setValueColorHex(''); }}>
                     + Agregar valor
                   </button>
                 )}
